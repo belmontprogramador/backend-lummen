@@ -1,0 +1,366 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER
+  ADMIN
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(ADMIN)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELED
+}
+
+enum BoostType {
+  BOOST
+  SUPERBOOST
+}
+
+enum BoostStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum Pronoun {
+  HE_HIM
+  SHE_HER
+  THEY_THEM
+  OTHER
+}
+
+enum Intention {
+  FRIENDS
+  DATING
+  LONG_TERM
+  CASUAL
+  NETWORKING
+  OTHER
+}
+
+enum RelationshipType {
+  MONOGAMY
+  NON_MONOGAMY
+  OPEN
+  OTHER
+}
+
+enum EducationLevel {
+  HIGH_SCHOOL
+  BACHELOR
+  MASTER
+  PHD
+  OTHER
+}
+
+enum SmokingStatus {
+  NO
+  SOCIALLY
+  YES
+}
+
+enum DrinkingStatus {
+  NO
+  SOCIALLY
+  YES
+}
+
+enum ActivityFrequency {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum PetsPreference {
+  NONE
+  DOG
+  CAT
+  DOG_AND_CAT
+  OTHER
+}
+
+enum CommunicationStyle {
+  DIRECT
+  HUMOR
+  EMPATHETIC
+  ANALYTICAL
+  OTHER
+}
+
+enum ZodiacSign {
+  ARIES
+  TAURUS
+  GEMINI
+  CANCER
+  LEO
+  VIRGO
+  LIBRA
+  SCORPIO
+  SAGITTARIUS
+  CAPRICORN
+  AQUARIUS
+  PISCES
+  OTHER
+}
+
+enum SexualOrientation {
+  STRAIGHT
+  GAY
+  LESBIAN
+  BISEXUAL
+  ASEXUAL
+  PANSEXUAL
+  QUEER
+  OTHER
+}
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+  email     String @unique
+  password  String
+  photo     String
+  isPaid    Boolean    @default(false)
+  paidUntil DateTime?
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  profile    UserProfile?
+  preference UserPreference? // <-- inverso de UserPreference.user
+  photos     UserPhoto[] // <-- inverso de UserPhoto.user
+  payments   Payment[]
+  credits    BoostCredit[]
+  boosts     BoostActivation[]
+
+  likesSent     Like[] @relation("LikesSent")
+  likesReceived Like[] @relation("LikesReceived")
+}
+
+model UserPhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url       String
+  position  Int // 1..8 para ordenar
+  createdAt DateTime @default(now())
+
+  @@unique([userId, position]) // impede duas fotos na mesma posição
+  @@index([userId])
+}
+
+model UserPreference {
+  userId        String   @id @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  maxDistanceKm Int      @default(50) // 15..200 por ex. (validar na API)
+  ageMin        Int      @default(18)
+  ageMax        Int      @default(99)
+  updatedAt     DateTime @updatedAt
+}
+
+model UserProfile {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // básicos
+  name             String?
+  bio              String?
+  birthday         DateTime?
+  gender           String?
+  orientation      SexualOrientation?
+  orientationOther String?
+
+  // localização
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+  city      String?
+  state     String?
+  country   String?
+
+  // pronome
+  pronoun      Pronoun?
+  pronounOther String?
+
+  // altura (cm)
+  heightCm Int?
+
+  // intenção e relacionamento
+  intention         Intention?
+  intentionOther    String?
+  relationshipType  RelationshipType?
+  relationshipOther String?
+
+  // idiomas (array obrigatório com default vazio)
+  languages String[] @default([])
+
+  // “mais sobre mim”
+  zodiac             ZodiacSign?
+  zodiacOther        String?
+  educationLevel     EducationLevel?
+  educationOther     String?
+  communication      CommunicationStyle?
+  communicationOther String?
+
+  // estilo de vida
+  pets          PetsPreference?
+  petsOther     String?
+  drinking      DrinkingStatus?
+  smoking       SmokingStatus?
+  activityLevel ActivityFrequency?
+
+  // trabalho/escola
+  jobTitle  String?
+  company   String?
+  education String?
+  livingIn  String?
+
+  // interesses (arrays obrigatórios com default vazio)
+  interestsActivities    String[] @default([])
+  interestsLifestyle     String[] @default([])
+  interestsCreativity    String[] @default([])
+  interestsSportsFitness String[] @default([])
+  interestsMusic         String[] @default([])
+  interestsNightlife     String[] @default([])
+  interestsTvCinema      String[] @default([])
+
+  // foto extra
+  photo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([latitude, longitude])
+}
+
+model Payment {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @db.Uuid
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Decimal       @db.Decimal(10, 2)
+  currency    String        @default("USD")
+  status      PaymentStatus @default(PENDING)
+  referenceId String?
+  createdAt   DateTime      @default(now())
+  paidAt      DateTime?
+  expiresAt   DateTime?
+  updatedAt   DateTime      @updatedAt
+
+  productId String?  @db.Uuid
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([productId])
+  @@index([userId, status])
+  @@index([status, paidAt])
+}
+
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  likerId   String   @db.Uuid
+  likedId   String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  liker User @relation("LikesSent", fields: [likerId], references: [id], onDelete: Cascade)
+  liked User @relation("LikesReceived", fields: [likedId], references: [id], onDelete: Cascade)
+
+  @@unique([likerId, likedId])
+  @@index([likerId])
+  @@index([likedId])
+}
+
+model Product {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  kind      String
+  credits   Int?
+  minutes   Int?
+  price     Decimal  @db.Decimal(10, 2)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments     Payment[]
+  boostCredits BoostCredit[] // <-- inverso de BoostCredit.product
+}
+
+model BoostCredit {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String?  @db.Uuid
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  type      BoostType
+  credits   Int
+  used      Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  activations BoostActivation[]
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model BoostActivation {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type     BoostType
+  status   BoostStatus @default(PENDING)
+  startsAt DateTime
+  endsAt   DateTime
+  priority Int         @default(1)
+
+  creditId String?      @db.Uuid
+  credit   BoostCredit? @relation(fields: [creditId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status, startsAt])
+  @@index([status, endsAt])
+  @@index([creditId])
+}
+
+model EnumLabel {
+  id        String   @id @default(uuid()) @db.Uuid
+  enumType  String // ex.: "Pronoun", "RelationshipType", "EducationLevel"
+  enumValue String // ex.: "HE_HIM", "MONOGAMY", "MASTER"
+  locale    String // "en", "pt", "es", etc.
+  label     String // tradução humana: "He/Him", "Ele/Dele", "Él/De él"
+  createdAt DateTime @default(now())
+
+  @@unique([enumType, enumValue, locale])
+  @@index([enumType, locale])
+}
