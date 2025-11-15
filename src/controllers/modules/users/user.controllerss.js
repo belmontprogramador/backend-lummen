@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { prisma } = require('../../dataBase/prisma');
+const { prisma } = require('../../../dataBase/prisma');
 const axios = require('axios');
 const nodemailer = require("nodemailer"); 
 
@@ -76,10 +76,10 @@ function buildResetPasswordEmailHTML({ name, resetUrl }) {
 exports.create = async (req, res) => {
   try {
     let { email, password, isPaid, status } = req.body;
-    const file = req.file; // multer.single('photo')
+    const file = req.file;
 
     if (!email || !password) return res.status(400).json({ error: 'email e password são obrigatórios' });
-    if (!file) return res.status(400).json({ error: 'photo é obrigatória (multipart/form-data)' });
+    if (!file) return res.status(400).json({ error: 'photo é obrigatória' });
 
     email = normalizeEmail(email);
 
@@ -89,6 +89,8 @@ exports.create = async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const photoPath = toPublicPhotoPath(file);
 
+
+    // 1️⃣ CRIA USUÁRIO PRINCIPAL
     const user = await prisma.user.create({
       data: {
         email,
@@ -99,12 +101,86 @@ exports.create = async (req, res) => {
       },
     });
 
+
+    // 2️⃣ CRIA PERFIL VAZIO
+    await prisma.userProfile.create({
+      data: {
+        userId: user.id
+      }
+    });
+
+
+    // 3️⃣ CRIA PREFERÊNCIAS PADRÃO
+    await prisma.userPreference.create({
+      data: {
+        userId: user.id,
+        maxDistanceKm: 50,
+        ageMin: 18,
+        ageMax: 99
+      }
+    });
+
+
+    // 4️⃣ ADICIONA FOTO PRINCIPAL NA POSIÇÃO 1
+    await prisma.userPhoto.create({
+      data: {
+        userId: user.id,
+        url: photoPath,
+        position: 1
+      }
+    });
+
+
+    // 5️⃣ CRIA PAYMENT PLACEHOLDER
+    await prisma.payment.create({
+      data: {
+        userId: user.id,
+        amount: 0,
+        currency: "USD",
+        status: "PENDING",
+        referenceId: null,
+        paidAt: null,
+        expiresAt: null
+      }
+    });
+
+
+    // 6️⃣ CRIA BOOSTCREDIT PLACEHOLDER
+    const boostCredit = await prisma.boostCredit.create({
+      data: {
+        userId: user.id,
+        type: "BOOST",
+        credits: 0,
+        used: 0,
+        expiresAt: null,
+        productId: null
+      }
+    });
+
+
+    // 7️⃣ CRIA BOOSTACTIVATION PLACEHOLDER
+    await prisma.boostActivation.create({
+      data: {
+        userId: user.id,
+        type: "BOOST",
+        status: "PENDING",
+        startsAt: new Date(),
+        endsAt: new Date(),
+        priority: 1,
+        creditId: boostCredit.id
+      }
+    });
+
+
+    // 8️⃣ GERA TOKEN JWT
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET || 'secret_dev_key',
       { expiresIn: '7d' }
     );
 
+
+    // 9️⃣ RETORNA RESPOSTA COMPLETA
     return res.status(201).json({
       user: {
         id: user.id,
@@ -116,15 +192,25 @@ exports.create = async (req, res) => {
         updatedAt: user.updatedAt,
       },
       token,
+      created: {
+        profile: true,
+        preference: true,
+        photo: true,
+        payment: true,
+        boostCredit: true,
+        boostActivation: true
+      }
     });
+
   } catch (err) {
+    console.error("ERROR CREATE USER:", err);
+    
     if (err?.code === 'P2002' && err?.meta?.target?.includes('email')) {
       return res.status(409).json({ error: 'E-mail já cadastrado' });
     }
     return res.status(400).json({ error: err.message });
   }
 };
-
 // ---------- LOGIN ----------
 exports.login = async (req, res) => {
   try {

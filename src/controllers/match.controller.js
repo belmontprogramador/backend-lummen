@@ -1,4 +1,4 @@
-const { prisma } = require('../../dataBase/prisma');
+const { prisma } = require('../dataBase/prisma');
 
 exports.likeUser = async (req, res) => {
   try {
