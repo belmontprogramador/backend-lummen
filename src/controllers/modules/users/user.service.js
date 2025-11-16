@@ -56,47 +56,48 @@ module.exports = {
   // -------------------------
   // REGISTER
   // -------------------------
-  async register(payload, file) {
-    let { email, password, isPaid, status, name } = payload;
+ async register(payload, file) {
+  let { email, password, isPaid, status, name } = payload;
 
-    if (!email || !password) throw new Error("email e password são obrigatórios");
-    if (!file) throw new Error("photo é obrigatória");
+  if (!email || !password) throw new Error("email e password são obrigatórios");
+  if (!file) throw new Error("photo é obrigatória");
 
-    email = normalizeEmail(email);
+  email = normalizeEmail(email);
 
-    const exists = await repository.findByEmail(email);
-    if (exists) throw new Error("E-mail já cadastrado");
+  const exists = await repository.findByEmail(email);
+  if (exists) throw new Error("E-mail já cadastrado");
 
-    const hash = await bcrypt.hash(password, 10);
-    const photoPath = toPublicPath(file);
+  const hash = await bcrypt.hash(password, 10);
+  const photoPath = toPublicPath(file);
 
-    const user = await repository.createUser({
-      email,
-      password: hash,
-      isPaid: Boolean(isPaid),
-      status: status || undefined,
-      photo: photoPath,
-      name: name || "",
-    });
+  const user = await repository.createUser({
+    email,
+    password: hash,
+    isPaid: Boolean(isPaid),
+    status: status || undefined,
+    photo: photoPath,   // <-- Foto de perfil
+    name: name || "",
+  });
 
-    // Criar tabelas relacionadas
-    await repository.createUserProfile(user.id);
-    await repository.createUserPreference(user.id);
-    await repository.createUserPhoto(user.id, photoPath);
-    const credit = await repository.createBoostCredit(user.id);
-    await repository.createBoostActivation(user.id, credit.id);
-    await repository.createPlaceholderPayment(user.id);
+  await repository.createUserProfile(user.id);
+  await repository.createUserPreference(user.id);
 
-    // Token
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || "secret_key",
-      { expiresIn: "7d" }
-    );
+  // ⚠️ GALERIA DEVE COMEÇAR VAZIA
+  // ❌ NÃO criar foto automática aqui!
 
-    const fullUser = await repository.findOne(user.id);
-    return { user: fullUser, token };
-  },
+  const credit = await repository.createBoostCredit(user.id);
+  await repository.createBoostActivation(user.id, credit.id);
+  await repository.createPlaceholderPayment(user.id);
+
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET || "secret_key",
+    { expiresIn: "7d" }
+  );
+
+  const fullUser = await repository.findOne(user.id);
+  return { user: fullUser, token };
+},
 
   // -------------------------
   // LOGIN
@@ -145,31 +146,29 @@ module.exports = {
   // -------------------------
   // UPDATE SIMPLIFICADO
   // -------------------------
-  async update(id, data, files) {
-    const USER_FIELDS = ["email", "name", "password", "status", "isPaid", "paidUntil"];
+  
+  async update(id, data, file) {
+  const USER_FIELDS = ["email", "name", "password", "status", "isPaid", "paidUntil"];
 
-    const userData = {};
+  const userData = {};
 
-    for (const key in data) {
-      if (USER_FIELDS.includes(key)) {
-        userData[key] = data[key];
-      }
+  for (const key in data) {
+    if (USER_FIELDS.includes(key)) {
+      userData[key] = data[key];
     }
+  }
 
-    // Foto de perfil
-    if (files?.photo?.length > 0) {
-      const file = files.photo[0];
-      userData.photo = toPublicPath(file);
-    }
+  // Foto de perfil (agora correto!)
+  if (file) {
+    userData.photo = toPublicPath(file);
+  }
 
-    // Update
-    if (Object.keys(userData).length > 0) {
-      await repository.updateUser(id, userData);
-    }
+  if (Object.keys(userData).length > 0) {
+    await repository.updateUser(id, userData);
+  }
 
-    // retorno simples
-    return await repository.findUserBasic(id);
-  },
+  return await repository.findUserBasic(id);
+},
 
   // -------------------------
   // REMOVE

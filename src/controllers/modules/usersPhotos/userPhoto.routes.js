@@ -13,39 +13,39 @@ const upload = multer({
 router.use(requireApiKey);
 router.use(requireAuth);
 
-// 📌 LISTAR FOTOS DO USUÁRIO
-router.get("/:userId", controller.list);
+/* 🔥 ROTAS ESPECÍFICAS ANTES DAS GENÉRICAS */
+// DELETE
+router.delete("/photo/:photoId", controller.remove);
 
-// 📌 CRIAR NOVA FOTO
+// LISTAR
+router.get("/user/:userId", controller.list);
+
+// UPLOAD 1
 router.post(
-  "/:userId",
+  "/user/:userId",
   upload.single("photo"),
   controller.create
 );
 
-// 📌 MULTIPLOS UPLOADS
+// UPLOAD MULTIPLE
 router.post(
-  "/:userId/multi",
+  "/user/:userId/multi",
   upload.array("photos", 10),
   controller.createMany
 );
 
+// BULK
 router.patch(
-  "/:userId/bulk",
+  "/user/:userId/bulk",
   upload.array("files", 10),
   controller.bulkUpdate
 );
 
-
-
-// 📌 ATUALIZAR FOTO POR POSIÇÃO
+// UPDATE POSIÇÃO
 router.patch(
-  "/:userId/:position",
+  "/user/:userId/position/:position",
   upload.single("photo"),
   controller.updateByPosition
 );
-
-// 📌 DELETAR UMA FOTO POR ID
-router.delete("/:photoId", controller.remove);
 
 module.exports = router;
