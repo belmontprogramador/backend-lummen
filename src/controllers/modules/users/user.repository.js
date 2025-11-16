@@ -14,6 +14,21 @@ module.exports = {
     });
   },
 
+  findByEmailBasic(email) {
+    return prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true }
+    });
+  },
+
+  findByIdBasic(id) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: { id: true, password: true }
+    });
+  },
+
+  // retorna o usuário completo
   findOne(id) {
     return prisma.user.findUnique({
       where: { id },
@@ -52,13 +67,9 @@ module.exports = {
     });
   },
 
-  createUserPhoto(userId, url) {
+  createUserPhoto(userId, url, position = 1) {
     return prisma.userPhoto.create({
-      data: {
-        userId,
-        url,
-        position: 1
-      }
+      data: { userId, url, position }
     });
   },
 
@@ -98,39 +109,55 @@ module.exports = {
     });
   },
 
-  // ---------- LIST / COUNT ----------
-  list({ skip, limit, where }) {
-    return prisma.user.findMany({
-      skip,
-      take: limit,
-      where,
-      orderBy: { createdAt: "desc" },
-      include: {
-        profile: true,
-        preference: true,
-        photos: true
-      }
-    });
-  },
+  // ---------- LIST ----------
+  
+ list({ skip, limit, where }) {
+  return prisma.user.findMany({
+    skip,
+    take: limit,
+    where,
+    orderBy: { createdAt: "desc" },
+    include: {
+      profile: true,       // <-- profile continua, mas ignore o name daqui
+      preference: true,
+      photos: true
+    }
+  });
+},
 
   count(where) {
     return prisma.user.count({ where });
   },
 
-  // ---------- UPDATES ----------
-  updateUser(id, data) {
-    return prisma.user.update({
+  findUserBasic(id) {
+    return prisma.user.findUnique({
       where: { id },
-      data,
       select: {
         id: true,
         email: true,
+        name: true,
         photo: true,
-        isPaid: true,
         status: true,
+        isPaid: true,
+        paidUntil: true,
         createdAt: true,
         updatedAt: true
       }
+    });
+  },
+
+  // ---------- UPDATE ----------
+  updateUser(id, data) {
+    return prisma.user.update({
+      where: { id },
+      data
+    });
+  },
+
+  updatePassword(id, newHash) {
+    return prisma.user.update({
+      where: { id },
+      data: { password: newHash }
     });
   },
 
@@ -151,63 +178,8 @@ module.exports = {
     });
   },
 
-  updatePassword(id, newHash) {
-  return prisma.user.update({
-    where: { id },
-    data: { password: newHash }
-  });
-},
-
   // ---------- DELETE ----------
   deleteUser(id) {
     return prisma.user.delete({ where: { id } });
-  },
-
-  updatePassword(id, newHash) {
-  return prisma.user.update({
-    where: { id },
-    data: { password: newHash }
-  });
-},
-
-updatePaid(email, expirationDate) {
-  return prisma.user.update({
-    where: { email },
-    data: {
-      isPaid: true,
-      paidUntil: expirationDate,
-    },
-    select: {
-      id: true,
-      email: true,
-      isPaid: true,
-      paidUntil: true,
-      updatedAt: true
-    }
-  });
-},
-
-
-findByIdBasic(id) {
-  return prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      password: true
-    }
-  });
-},
-
-findByEmailBasic(email) {
-  return prisma.user.findUnique({
-    where: { email },
-    select: {
-      id: true,
-      email: true
-    }
-  });
-},
-
-
-
+  }
 };

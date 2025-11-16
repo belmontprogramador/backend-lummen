@@ -41,14 +41,14 @@ async getOne(req, res) {
   }
 },
 
-  async update(req, res) {
-    try {
-      const result = await service.update(req.params.id, req.body, req.file);
-      return res.json(result);
-    } catch (err) {
-      return res.status(400).json({ error: err.message });
-    }
-  },
+async update(req, res) {
+  try {
+    const result = await service.update(req.params.id, req.body, req.files);
+    return res.json(result);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+},
 
   async remove(req, res) {
     try {

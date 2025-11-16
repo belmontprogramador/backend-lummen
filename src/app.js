@@ -5,6 +5,8 @@ const dotenv = require("dotenv");
 const path = require("path"); 
 
 const usersModule = require("./controllers/modules/users/index");
+const userPhotosModule = require("./controllers/modules/usersPhotos/index");
+
 const matchRoutes = require("./routes/users/match.routes");
 const adminRoutes = require("./routes/admins/admin.routes");
 
@@ -30,6 +32,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 app.use("/users", usersModule);
+app.use("/user-photos", userPhotosModule);
+
 app.use("/matches", matchRoutes);
 app.use("/admins", adminRoutes);
 
