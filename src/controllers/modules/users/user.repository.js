@@ -1,24 +1,9 @@
-// src/modules/users/user.repository.js
 const { prisma } = require("../../../dataBase/prisma");
 
 module.exports = {
   // ---------- FINDERS ----------
   findByEmail(email) {
     return prisma.user.findUnique({ where: { email } });
-  },
-
-  findByEmailForReset(email) {
-    return prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true }
-    });
-  },
-
-  findByEmailBasic(email) {
-    return prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true }
-    });
   },
 
   findByIdBasic(id) {
@@ -29,36 +14,66 @@ module.exports = {
   },
 
   // retorna o usuário completo
-  findOne(id) {
-    return prisma.user.findUnique({
-      where: { id },
-      include: {
-        profile: true,
-        preference: true,
-        photos: true,
-        payments: true,
-        credits: true,
-        boosts: true,
-        likesSent: true,
-        likesReceived: true
-      }
-    });
-  },
+findOne(id) {
+  return prisma.user.findUnique({
+    where: { id },
+    include: {
+      profileBasic: true,
+      profileLocation: true,
+      profileLifestyle: true,
+      profileWork: true,
+      profileRelation: true,
+      profileInterests: true,
+      profileExtra: true,
+
+      preference: true,
+      photos: true,
+      payments: true,
+      credits: true,
+      boosts: true,
+      likesSent: true,
+      likesReceived: true
+    }
+  });
+},
 
   // ---------- CREATE ----------
   createUser(data) {
     return prisma.user.create({ data });
   },
 
-  createUserProfile(userId) {
-    return prisma.userProfile.create({
-      data: { userId }
-    });
-  },
+ createUserProfileBasic(userId) {
+  return prisma.userProfileBasic.create({ data: { userId } });
+},
+
+createUserProfileLocation(userId) {
+  return prisma.userProfileLocation.create({ data: { userId } });
+},
+
+createUserProfileLifestyle(userId) {
+  return prisma.userProfileLifestyle.create({ data: { userId } });
+},
+
+createUserProfileWorkEducation(userId) {
+  return prisma.userProfileWorkEducation.create({ data: { userId } });
+},
+
+createUserProfileRelationInfo(userId) {
+  return prisma.userProfileRelationInfo.create({ data: { userId } });
+},
+
+createUserProfileInterests(userId) {
+  return prisma.userProfileInterests.create({ data: { userId } });
+},
+
+createUserProfileExtra(userId) {
+  return prisma.userProfileExtra.create({ data: { userId } });
+},
 
   createUserPreference(userId) {
     return prisma.userPreference.create({
       data: {
+         preferredGenders: [],
         userId,
         maxDistanceKm: 50,
         ageMin: 18,
@@ -110,17 +125,21 @@ module.exports = {
   },
 
   // ---------- LIST ----------
-  
- list({ skip, limit, where }) {
+  list({ skip, limit, where }) {
   return prisma.user.findMany({
     skip,
     take: limit,
     where,
     orderBy: { createdAt: "desc" },
     include: {
-      profile: true,       // <-- profile continua, mas ignore o name daqui
-      preference: true,
-      photos: true
+      profileBasic: true,
+      profileLocation: true,
+      profileLifestyle: true,
+      profileWork: true,
+      profileRelation: true,
+      profileInterests: true,
+      profileExtra: true,
+      photos: true,
     }
   });
 },

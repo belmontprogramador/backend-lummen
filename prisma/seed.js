@@ -2,10 +2,87 @@ const { PrismaClient } = require('../generated/prisma');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌍 Inserindo traduções multilíngues para todos os enums...');
+  console.log("🌍 Inserindo traduções multilíngues para TODOS os ENUMS...");
 
   const data = [
+    // ---------------------------------------------------------
+    // 🧑‍💼 Role
+    // ---------------------------------------------------------
+    { enumType: 'Role', enumValue: 'SUPER', locale: 'en', label: 'Super Admin' },
+    { enumType: 'Role', enumValue: 'SUPER', locale: 'pt', label: 'Super Admin' },
+    { enumType: 'Role', enumValue: 'SUPER', locale: 'es', label: 'Super Admin' },
+
+    { enumType: 'Role', enumValue: 'ADMIN', locale: 'en', label: 'Administrator' },
+    { enumType: 'Role', enumValue: 'ADMIN', locale: 'pt', label: 'Administrador' },
+    { enumType: 'Role', enumValue: 'ADMIN', locale: 'es', label: 'Administrador' },
+
+    // ---------------------------------------------------------
+    // 👤 UserStatus
+    // ---------------------------------------------------------
+    { enumType: 'UserStatus', enumValue: 'ACTIVE', locale: 'en', label: 'Active' },
+    { enumType: 'UserStatus', enumValue: 'ACTIVE', locale: 'pt', label: 'Ativo' },
+    { enumType: 'UserStatus', enumValue: 'ACTIVE', locale: 'es', label: 'Activo' },
+
+    { enumType: 'UserStatus', enumValue: 'INACTIVE', locale: 'en', label: 'Inactive' },
+    { enumType: 'UserStatus', enumValue: 'INACTIVE', locale: 'pt', label: 'Inativo' },
+    { enumType: 'UserStatus', enumValue: 'INACTIVE', locale: 'es', label: 'Inactivo' },
+
+    { enumType: 'UserStatus', enumValue: 'SUSPENDED', locale: 'en', label: 'Suspended' },
+    { enumType: 'UserStatus', enumValue: 'SUSPENDED', locale: 'pt', label: 'Suspenso' },
+    { enumType: 'UserStatus', enumValue: 'SUSPENDED', locale: 'es', label: 'Suspendido' },
+
+    // ---------------------------------------------------------
+    // 💳 PaymentStatus
+    // ---------------------------------------------------------
+    { enumType: 'PaymentStatus', enumValue: 'PENDING', locale: 'en', label: 'Pending' },
+    { enumType: 'PaymentStatus', enumValue: 'PENDING', locale: 'pt', label: 'Pendente' },
+    { enumType: 'PaymentStatus', enumValue: 'PENDING', locale: 'es', label: 'Pendiente' },
+
+    { enumType: 'PaymentStatus', enumValue: 'PAID', locale: 'en', label: 'Paid' },
+    { enumType: 'PaymentStatus', enumValue: 'PAID', locale: 'pt', label: 'Pago' },
+    { enumType: 'PaymentStatus', enumValue: 'PAID', locale: 'es', label: 'Pagado' },
+
+    { enumType: 'PaymentStatus', enumValue: 'EXPIRED', locale: 'en', label: 'Expired' },
+    { enumType: 'PaymentStatus', enumValue: 'EXPIRED', locale: 'pt', label: 'Expirado' },
+    { enumType: 'PaymentStatus', enumValue: 'EXPIRED', locale: 'es', label: 'Expirado' },
+
+    { enumType: 'PaymentStatus', enumValue: 'CANCELED', locale: 'en', label: 'Canceled' },
+    { enumType: 'PaymentStatus', enumValue: 'CANCELED', locale: 'pt', label: 'Cancelado' },
+    { enumType: 'PaymentStatus', enumValue: 'CANCELED', locale: 'es', label: 'Cancelado' },
+
+    // ---------------------------------------------------------
+    // 🚀 BoostType
+    // ---------------------------------------------------------
+    { enumType: 'BoostType', enumValue: 'BOOST', locale: 'en', label: 'Boost' },
+    { enumType: 'BoostType', enumValue: 'BOOST', locale: 'pt', label: 'Impulso' },
+    { enumType: 'BoostType', enumValue: 'BOOST', locale: 'es', label: 'Impulso' },
+
+    { enumType: 'BoostType', enumValue: 'SUPERBOOST', locale: 'en', label: 'Super Boost' },
+    { enumType: 'BoostType', enumValue: 'SUPERBOOST', locale: 'pt', label: 'Super Impulso' },
+    { enumType: 'BoostType', enumValue: 'SUPERBOOST', locale: 'es', label: 'Super Impulso' },
+
+    // ---------------------------------------------------------
+    // 🚀 BoostStatus
+    // ---------------------------------------------------------
+    { enumType: 'BoostStatus', enumValue: 'PENDING', locale: 'en', label: 'Pending' },
+    { enumType: 'BoostStatus', enumValue: 'PENDING', locale: 'pt', label: 'Pendente' },
+    { enumType: 'BoostStatus', enumValue: 'PENDING', locale: 'es', label: 'Pendiente' },
+
+    { enumType: 'BoostStatus', enumValue: 'ACTIVE', locale: 'en', label: 'Active' },
+    { enumType: 'BoostStatus', enumValue: 'ACTIVE', locale: 'pt', label: 'Ativo' },
+    { enumType: 'BoostStatus', enumValue: 'ACTIVE', locale: 'es', label: 'Activo' },
+
+    { enumType: 'BoostStatus', enumValue: 'EXPIRED', locale: 'en', label: 'Expired' },
+    { enumType: 'BoostStatus', enumValue: 'EXPIRED', locale: 'pt', label: 'Expirado' },
+    { enumType: 'BoostStatus', enumValue: 'EXPIRED', locale: 'es', label: 'Expirado' },
+
+    { enumType: 'BoostStatus', enumValue: 'CANCELED', locale: 'en', label: 'Canceled' },
+    { enumType: 'BoostStatus', enumValue: 'CANCELED', locale: 'pt', label: 'Cancelado' },
+    { enumType: 'BoostStatus', enumValue: 'CANCELED', locale: 'es', label: 'Cancelado' },
+
+    // ---------------------------------------------------------
     // 🧍 Pronoun
+    // ---------------------------------------------------------
     { enumType: 'Pronoun', enumValue: 'HE_HIM', locale: 'en', label: 'He/Him' },
     { enumType: 'Pronoun', enumValue: 'HE_HIM', locale: 'pt', label: 'Ele/Dele' },
     { enumType: 'Pronoun', enumValue: 'HE_HIM', locale: 'es', label: 'Él/De él' },
@@ -22,160 +99,179 @@ async function main() {
     { enumType: 'Pronoun', enumValue: 'OTHER', locale: 'pt', label: 'Outro' },
     { enumType: 'Pronoun', enumValue: 'OTHER', locale: 'es', label: 'Otro' },
 
+    // ---------------------------------------------------------
+    // 🚻 Gender
+    // ---------------------------------------------------------
+    { enumType: 'Gender', enumValue: 'MALE', locale: 'en', label: 'Male' },
+    { enumType: 'Gender', enumValue: 'MALE', locale: 'pt', label: 'Homem' },
+    { enumType: 'Gender', enumValue: 'MALE', locale: 'es', label: 'Hombre' },
+
+    { enumType: 'Gender', enumValue: 'FEMALE', locale: 'en', label: 'Female' },
+    { enumType: 'Gender', enumValue: 'FEMALE', locale: 'pt', label: 'Mulher' },
+    { enumType: 'Gender', enumValue: 'FEMALE', locale: 'es', label: 'Mujer' },
+
+    { enumType: 'Gender', enumValue: 'NON_BINARY', locale: 'en', label: 'Non-binary' },
+    { enumType: 'Gender', enumValue: 'NON_BINARY', locale: 'pt', label: 'Não-binário' },
+    { enumType: 'Gender', enumValue: 'NON_BINARY', locale: 'es', label: 'No binario' },
+
+    { enumType: 'Gender', enumValue: 'OTHER', locale: 'en', label: 'Other' },
+    { enumType: 'Gender', enumValue: 'OTHER', locale: 'pt', label: 'Outro' },
+    { enumType: 'Gender', enumValue: 'OTHER', locale: 'es', label: 'Otro' },
+
+    // ---------------------------------------------------------
     // ❤️ Intention
-    { enumType: 'Intention', enumValue: 'FRIENDS', locale: 'en', label: 'Friends' },
-    { enumType: 'Intention', enumValue: 'FRIENDS', locale: 'pt', label: 'Amizade' },
-    { enumType: 'Intention', enumValue: 'FRIENDS', locale: 'es', label: 'Amistad' },
+    // ---------------------------------------------------------
+    ...[
+      ['FRIENDS','Friends','Amizade','Amistad'],
+      ['DATING','Dating','Namoro','Citas'],
+      ['LONG_TERM','Long-term relationship','Relacionamento sério','Relación seria'],
+      ['CASUAL','Casual','Casual','Casual'],
+      ['NETWORKING','Networking','Networking','Red de contactos'],
+      ['OTHER','Other','Outro','Otro'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'Intention', enumValue:value, locale:'en', label:en },
+      { enumType:'Intention', enumValue:value, locale:'pt', label:pt },
+      { enumType:'Intention', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'Intention', enumValue: 'DATING', locale: 'en', label: 'Dating' },
-    { enumType: 'Intention', enumValue: 'DATING', locale: 'pt', label: 'Namoro' },
-    { enumType: 'Intention', enumValue: 'DATING', locale: 'es', label: 'Citas' },
-
-    { enumType: 'Intention', enumValue: 'LONG_TERM', locale: 'en', label: 'Long-term relationship' },
-    { enumType: 'Intention', enumValue: 'LONG_TERM', locale: 'pt', label: 'Relacionamento sério' },
-    { enumType: 'Intention', enumValue: 'LONG_TERM', locale: 'es', label: 'Relación seria' },
-
-    { enumType: 'Intention', enumValue: 'CASUAL', locale: 'en', label: 'Casual' },
-    { enumType: 'Intention', enumValue: 'CASUAL', locale: 'pt', label: 'Casual' },
-    { enumType: 'Intention', enumValue: 'CASUAL', locale: 'es', label: 'Casual' },
-
-    { enumType: 'Intention', enumValue: 'NETWORKING', locale: 'en', label: 'Networking' },
-    { enumType: 'Intention', enumValue: 'NETWORKING', locale: 'pt', label: 'Networking' },
-    { enumType: 'Intention', enumValue: 'NETWORKING', locale: 'es', label: 'Red de contactos' },
-
-    { enumType: 'Intention', enumValue: 'OTHER', locale: 'en', label: 'Other' },
-    { enumType: 'Intention', enumValue: 'OTHER', locale: 'pt', label: 'Outro' },
-    { enumType: 'Intention', enumValue: 'OTHER', locale: 'es', label: 'Otro' },
-
+    // ---------------------------------------------------------
     // 💞 RelationshipType
-    { enumType: 'RelationshipType', enumValue: 'MONOGAMY', locale: 'en', label: 'Monogamy' },
-    { enumType: 'RelationshipType', enumValue: 'MONOGAMY', locale: 'pt', label: 'Monogamia' },
-    { enumType: 'RelationshipType', enumValue: 'MONOGAMY', locale: 'es', label: 'Monogamia' },
+    // ---------------------------------------------------------
+    ...[
+      ['MONOGAMY','Monogamy','Monogamia','Monogamia'],
+      ['NON_MONOGAMY','Non-monogamy','Não monogamia','No monogamia'],
+      ['OPEN','Open relationship','Relacionamento aberto','Relación abierta'],
+      ['OTHER','Other','Outro','Otro'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'RelationshipType', enumValue:value, locale:'en', label:en },
+      { enumType:'RelationshipType', enumValue:value, locale:'pt', label:pt },
+      { enumType:'RelationshipType', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'RelationshipType', enumValue: 'NON_MONOGAMY', locale: 'en', label: 'Non-monogamy' },
-    { enumType: 'RelationshipType', enumValue: 'NON_MONOGAMY', locale: 'pt', label: 'Não monogamia' },
-    { enumType: 'RelationshipType', enumValue: 'NON_MONOGAMY', locale: 'es', label: 'No monogamia' },
-
-    { enumType: 'RelationshipType', enumValue: 'OPEN', locale: 'en', label: 'Open relationship' },
-    { enumType: 'RelationshipType', enumValue: 'OPEN', locale: 'pt', label: 'Relacionamento aberto' },
-    { enumType: 'RelationshipType', enumValue: 'OPEN', locale: 'es', label: 'Relación abierta' },
-
-    { enumType: 'RelationshipType', enumValue: 'OTHER', locale: 'en', label: 'Other' },
-    { enumType: 'RelationshipType', enumValue: 'OTHER', locale: 'pt', label: 'Outro' },
-    { enumType: 'RelationshipType', enumValue: 'OTHER', locale: 'es', label: 'Otro' },
-
+    // ---------------------------------------------------------
     // 🎓 EducationLevel
-    { enumType: 'EducationLevel', enumValue: 'HIGH_SCHOOL', locale: 'en', label: 'High School' },
-    { enumType: 'EducationLevel', enumValue: 'HIGH_SCHOOL', locale: 'pt', label: 'Ensino médio' },
-    { enumType: 'EducationLevel', enumValue: 'HIGH_SCHOOL', locale: 'es', label: 'Secundaria' },
+    // ---------------------------------------------------------
+    ...[
+      ['HIGH_SCHOOL','High School','Ensino médio','Secundaria'],
+      ['BACHELOR','Bachelor’s degree','Graduação','Licenciatura'],
+      ['MASTER','Master’s degree','Mestrado','Maestría'],
+      ['PHD','PhD / Doctorate','Doutorado','Doctorado'],
+      ['OTHER','Other','Outro','Otro'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'EducationLevel', enumValue:value, locale:'en', label:en },
+      { enumType:'EducationLevel', enumValue:value, locale:'pt', label:pt },
+      { enumType:'EducationLevel', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'EducationLevel', enumValue: 'BACHELOR', locale: 'en', label: 'Bachelor’s degree' },
-    { enumType: 'EducationLevel', enumValue: 'BACHELOR', locale: 'pt', label: 'Graduação' },
-    { enumType: 'EducationLevel', enumValue: 'BACHELOR', locale: 'es', label: 'Licenciatura' },
-
-    { enumType: 'EducationLevel', enumValue: 'MASTER', locale: 'en', label: 'Master’s degree' },
-    { enumType: 'EducationLevel', enumValue: 'MASTER', locale: 'pt', label: 'Mestrado' },
-    { enumType: 'EducationLevel', enumValue: 'MASTER', locale: 'es', label: 'Maestría' },
-
-    { enumType: 'EducationLevel', enumValue: 'PHD', locale: 'en', label: 'PhD / Doctorate' },
-    { enumType: 'EducationLevel', enumValue: 'PHD', locale: 'pt', label: 'Doutorado' },
-    { enumType: 'EducationLevel', enumValue: 'PHD', locale: 'es', label: 'Doctorado' },
-
-    { enumType: 'EducationLevel', enumValue: 'OTHER', locale: 'en', label: 'Other' },
-    { enumType: 'EducationLevel', enumValue: 'OTHER', locale: 'pt', label: 'Outro' },
-    { enumType: 'EducationLevel', enumValue: 'OTHER', locale: 'es', label: 'Otro' },
-
+    // ---------------------------------------------------------
     // 🚬 SmokingStatus
-    { enumType: 'SmokingStatus', enumValue: 'NO', locale: 'en', label: 'No' },
-    { enumType: 'SmokingStatus', enumValue: 'NO', locale: 'pt', label: 'Não' },
-    { enumType: 'SmokingStatus', enumValue: 'NO', locale: 'es', label: 'No' },
+    // ---------------------------------------------------------
+    ...[
+      ['NO','No','Não','No'],
+      ['SOCIALLY','Socially','Socialmente','Socialmente'],
+      ['YES','Yes','Sim','Sí'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'SmokingStatus', enumValue:value, locale:'en', label:en },
+      { enumType:'SmokingStatus', enumValue:value, locale:'pt', label:pt },
+      { enumType:'SmokingStatus', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'SmokingStatus', enumValue: 'SOCIALLY', locale: 'en', label: 'Socially' },
-    { enumType: 'SmokingStatus', enumValue: 'SOCIALLY', locale: 'pt', label: 'Socialmente' },
-    { enumType: 'SmokingStatus', enumValue: 'SOCIALLY', locale: 'es', label: 'Socialmente' },
-
-    { enumType: 'SmokingStatus', enumValue: 'YES', locale: 'en', label: 'Yes' },
-    { enumType: 'SmokingStatus', enumValue: 'YES', locale: 'pt', label: 'Sim' },
-    { enumType: 'SmokingStatus', enumValue: 'YES', locale: 'es', label: 'Sí' },
-
+    // ---------------------------------------------------------
     // 🍷 DrinkingStatus
-    { enumType: 'DrinkingStatus', enumValue: 'NO', locale: 'en', label: 'No' },
-    { enumType: 'DrinkingStatus', enumValue: 'NO', locale: 'pt', label: 'Não' },
-    { enumType: 'DrinkingStatus', enumValue: 'NO', locale: 'es', label: 'No' },
+    // ---------------------------------------------------------
+    ...[
+      ['NO','No','Não','No'],
+      ['SOCIALLY','Socially','Socialmente','Socialmente'],
+      ['YES','Yes','Sim','Sí'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'DrinkingStatus', enumValue:value, locale:'en', label:en },
+      { enumType:'DrinkingStatus', enumValue:value, locale:'pt', label:pt },
+      { enumType:'DrinkingStatus', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'DrinkingStatus', enumValue: 'SOCIALLY', locale: 'en', label: 'Socially' },
-    { enumType: 'DrinkingStatus', enumValue: 'SOCIALLY', locale: 'pt', label: 'Socialmente' },
-    { enumType: 'DrinkingStatus', enumValue: 'SOCIALLY', locale: 'es', label: 'Socialmente' },
-
-    { enumType: 'DrinkingStatus', enumValue: 'YES', locale: 'en', label: 'Yes' },
-    { enumType: 'DrinkingStatus', enumValue: 'YES', locale: 'pt', label: 'Sim' },
-    { enumType: 'DrinkingStatus', enumValue: 'YES', locale: 'es', label: 'Sí' },
-
+    // ---------------------------------------------------------
     // ⚽ ActivityFrequency
-    { enumType: 'ActivityFrequency', enumValue: 'LOW', locale: 'en', label: 'Low' },
-    { enumType: 'ActivityFrequency', enumValue: 'LOW', locale: 'pt', label: 'Baixa' },
-    { enumType: 'ActivityFrequency', enumValue: 'LOW', locale: 'es', label: 'Baja' },
+    // ---------------------------------------------------------
+    ...[
+      ['LOW','Low','Baixa','Baja'],
+      ['MEDIUM','Medium','Média','Media'],
+      ['HIGH','High','Alta','Alta'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'ActivityFrequency', enumValue:value, locale:'en', label:en },
+      { enumType:'ActivityFrequency', enumValue:value, locale:'pt', label:pt },
+      { enumType:'ActivityFrequency', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'ActivityFrequency', enumValue: 'MEDIUM', locale: 'en', label: 'Medium' },
-    { enumType: 'ActivityFrequency', enumValue: 'MEDIUM', locale: 'pt', label: 'Média' },
-    { enumType: 'ActivityFrequency', enumValue: 'MEDIUM', locale: 'es', label: 'Media' },
-
-    { enumType: 'ActivityFrequency', enumValue: 'HIGH', locale: 'en', label: 'High' },
-    { enumType: 'ActivityFrequency', enumValue: 'HIGH', locale: 'pt', label: 'Alta' },
-    { enumType: 'ActivityFrequency', enumValue: 'HIGH', locale: 'es', label: 'Alta' },
-
+    // ---------------------------------------------------------
     // 🐶 PetsPreference
-    { enumType: 'PetsPreference', enumValue: 'NONE', locale: 'en', label: 'None' },
-    { enumType: 'PetsPreference', enumValue: 'NONE', locale: 'pt', label: 'Nenhum' },
-    { enumType: 'PetsPreference', enumValue: 'NONE', locale: 'es', label: 'Ninguno' },
+    // ---------------------------------------------------------
+    ...[
+      ['NONE','None','Nenhum','Ninguno'],
+      ['DOG','Dog','Cachorro','Perro'],
+      ['CAT','Cat','Gato','Gato'],
+      ['DOG_AND_CAT','Dog and Cat','Cachorro e gato','Perro y gato'],
+      ['OTHER','Other','Outro','Otro'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'PetsPreference', enumValue:value, locale:'en', label:en },
+      { enumType:'PetsPreference', enumValue:value, locale:'pt', label:pt },
+      { enumType:'PetsPreference', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'PetsPreference', enumValue: 'DOG', locale: 'en', label: 'Dog' },
-    { enumType: 'PetsPreference', enumValue: 'DOG', locale: 'pt', label: 'Cachorro' },
-    { enumType: 'PetsPreference', enumValue: 'DOG', locale: 'es', label: 'Perro' },
-
-    { enumType: 'PetsPreference', enumValue: 'CAT', locale: 'en', label: 'Cat' },
-    { enumType: 'PetsPreference', enumValue: 'CAT', locale: 'pt', label: 'Gato' },
-    { enumType: 'PetsPreference', enumValue: 'CAT', locale: 'es', label: 'Gato' },
-
-    { enumType: 'PetsPreference', enumValue: 'DOG_AND_CAT', locale: 'en', label: 'Dog and Cat' },
-    { enumType: 'PetsPreference', enumValue: 'DOG_AND_CAT', locale: 'pt', label: 'Cachorro e gato' },
-    { enumType: 'PetsPreference', enumValue: 'DOG_AND_CAT', locale: 'es', label: 'Perro y gato' },
-
-    { enumType: 'PetsPreference', enumValue: 'OTHER', locale: 'en', label: 'Other' },
-    { enumType: 'PetsPreference', enumValue: 'OTHER', locale: 'pt', label: 'Outro' },
-    { enumType: 'PetsPreference', enumValue: 'OTHER', locale: 'es', label: 'Otro' },
-
+    // ---------------------------------------------------------
     // 💬 CommunicationStyle
-    { enumType: 'CommunicationStyle', enumValue: 'DIRECT', locale: 'en', label: 'Direct' },
-    { enumType: 'CommunicationStyle', enumValue: 'DIRECT', locale: 'pt', label: 'Direto' },
-    { enumType: 'CommunicationStyle', enumValue: 'DIRECT', locale: 'es', label: 'Directo' },
+    // ---------------------------------------------------------
+    ...[
+      ['DIRECT','Direct','Direto','Directo'],
+      ['HUMOR','Humorous','Bem-humorado','Humorístico'],
+      ['EMPATHETIC','Empathetic','Empático','Empático'],
+      ['ANALYTICAL','Analytical','Analítico','Analítico'],
+      ['OTHER','Other','Outro','Otro'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'CommunicationStyle', enumValue:value, locale:'en', label:en },
+      { enumType:'CommunicationStyle', enumValue:value, locale:'pt', label:pt },
+      { enumType:'CommunicationStyle', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'CommunicationStyle', enumValue: 'HUMOR', locale: 'en', label: 'Humorous' },
-    { enumType: 'CommunicationStyle', enumValue: 'HUMOR', locale: 'pt', label: 'Bem-humorado' },
-    { enumType: 'CommunicationStyle', enumValue: 'HUMOR', locale: 'es', label: 'Humorístico' },
+    // ---------------------------------------------------------
+    // ♈ ZodiacSign
+    // ---------------------------------------------------------
+    ...[
+      ['ARIES','Aries','Áries','Aries'],
+      ['TAURUS','Taurus','Touro','Tauro'],
+      ['GEMINI','Gemini','Gêmeos','Géminis'],
+      ['CANCER','Cancer','Câncer','Cáncer'],
+      ['LEO','Leo','Leão','Leo'],
+      ['VIRGO','Virgo','Virgem','Virgo'],
+      ['LIBRA','Libra','Libra','Libra'],
+      ['SCORPIO','Scorpio','Escorpião','Escorpio'],
+      ['SAGITTARIUS','Sagittarius','Sagitário','Sagitario'],
+      ['CAPRICORN','Capricorn','Capricórnio','Capricornio'],
+      ['AQUARIUS','Aquarius','Aquário','Acuario'],
+      ['PISCES','Pisces','Peixes','Piscis'],
+      ['OTHER','Other','Outro','Otro'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'ZodiacSign', enumValue:value, locale:'en', label:en },
+      { enumType:'ZodiacSign', enumValue:value, locale:'pt', label:pt },
+      { enumType:'ZodiacSign', enumValue:value, locale:'es', label:es },
+    ]),
 
-    { enumType: 'CommunicationStyle', enumValue: 'EMPATHETIC', locale: 'en', label: 'Empathetic' },
-    { enumType: 'CommunicationStyle', enumValue: 'EMPATHETIC', locale: 'pt', label: 'Empático' },
-    { enumType: 'CommunicationStyle', enumValue: 'EMPATHETIC', locale: 'es', label: 'Empático' },
-
-    { enumType: 'CommunicationStyle', enumValue: 'ANALYTICAL', locale: 'en', label: 'Analytical' },
-    { enumType: 'CommunicationStyle', enumValue: 'ANALYTICAL', locale: 'pt', label: 'Analítico' },
-    { enumType: 'CommunicationStyle', enumValue: 'ANALYTICAL', locale: 'es', label: 'Analítico' },
-
-    // ♈ ZodiacSign (simplificado)
-    { enumType: 'ZodiacSign', enumValue: 'ARIES', locale: 'en', label: 'Aries' },
-    { enumType: 'ZodiacSign', enumValue: 'ARIES', locale: 'pt', label: 'Áries' },
-    { enumType: 'ZodiacSign', enumValue: 'ARIES', locale: 'es', label: 'Aries' },
-    // … (adicione os demais signos até PISCES)
-
+    // ---------------------------------------------------------
     // 🌈 SexualOrientation
-    { enumType: 'SexualOrientation', enumValue: 'STRAIGHT', locale: 'en', label: 'Straight' },
-    { enumType: 'SexualOrientation', enumValue: 'STRAIGHT', locale: 'pt', label: 'Heterossexual' },
-    { enumType: 'SexualOrientation', enumValue: 'STRAIGHT', locale: 'es', label: 'Heterosexual' },
-
-    { enumType: 'SexualOrientation', enumValue: 'GAY', locale: 'en', label: 'Gay' },
-    { enumType: 'SexualOrientation', enumValue: 'GAY', locale: 'pt', label: 'Gay' },
-    { enumType: 'SexualOrientation', enumValue: 'GAY', locale: 'es', label: 'Gay' },
+    // ---------------------------------------------------------
+    ...[
+      ['STRAIGHT','Straight','Heterossexual','Heterosexual'],
+      ['GAY','Gay','Gay','Gay'],
+      ['LESBIAN','Lesbian','Lésbica','Lesbiana'],
+      ['BISEXUAL','Bisexual','Bissexual','Bisexual'],
+      ['ASEXUAL','Asexual','Assexual','Asexual'],
+      ['PANSEXUAL','Pansexual','Pansexual','Pansexual'],
+      ['QUEER','Queer','Queer','Queer'],
+      ['OTHER','Other','Outro','Otro'],
+    ].flatMap(([value,en,pt,es]) => [
+      { enumType:'SexualOrientation', enumValue:value, locale:'en', label:en },
+      { enumType:'SexualOrientation', enumValue:value, locale:'pt', label:pt },
+      { enumType:'SexualOrientation', enumValue:value, locale:'es', label:es },
+    ]),
   ];
 
   await prisma.enumLabel.createMany({ data, skipDuplicates: true });

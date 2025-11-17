@@ -56,6 +56,13 @@ enum Pronoun {
   OTHER
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+}
+
 enum Intention {
   FRIENDS
   DATING
@@ -143,7 +150,7 @@ enum SexualOrientation {
 
 model User {
   id        String     @id @default(uuid()) @db.Uuid
-  email     String @unique
+  email     String     @unique
   name      String?
   password  String
   photo     String
@@ -153,15 +160,22 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  profile    UserProfile?
-  preference UserPreference? // <-- inverso de UserPreference.user
-  photos     UserPhoto[] // <-- inverso de UserPhoto.user
-  payments   Payment[]
-  credits    BoostCredit[]
-  boosts     BoostActivation[]
+  // PERFIS QUEBRADOS (NOVOS)
+  profileBasic     UserProfileBasic?
+  profileLocation  UserProfileLocation?
+  profileLifestyle UserProfileLifestyle?
+  profileWork      UserProfileWorkEducation?
+  profileRelation  UserProfileRelationInfo?
+  profileInterests UserProfileInterests?
+  profileExtra     UserProfileExtra?
 
-  likesSent     Like[] @relation("LikesSent")
-  likesReceived Like[] @relation("LikesReceived")
+  preference    UserPreference?
+  photos        UserPhoto[]
+  payments      Payment[]
+  credits       BoostCredit[]
+  boosts        BoostActivation[]
+  likesSent     Like[]            @relation("LikesSent")
+  likesReceived Like[]            @relation("LikesReceived")
 }
 
 model UserPhoto {
@@ -169,79 +183,108 @@ model UserPhoto {
   userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   url       String
-  position  Int // 1..8 para ordenar
+  position  Int
   createdAt DateTime @default(now())
 
-  @@unique([userId, position]) // impede duas fotos na mesma posição
+  @@unique([userId, position])
   @@index([userId])
 }
 
 model UserPreference {
   userId        String   @id @db.Uuid
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  maxDistanceKm Int      @default(50) // 15..200 por ex. (validar na API)
+
+ preferredGenders Gender[] @default([])
+
+  maxDistanceKm Int      @default(50)
   ageMin        Int      @default(18)
   ageMax        Int      @default(99)
   updatedAt     DateTime @updatedAt
 }
 
-model UserProfile {
+model UserProfileBasic {
   userId String @id @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // básicos
-  name             String?
-  bio              String?
-  birthday         DateTime?
-  gender           String?
-  orientation      SexualOrientation?
-  orientationOther String?
+  bio        String?
+  birthday   DateTime?
+  gender     Gender?
+  orientation SexualOrientation?
+  pronoun    Pronoun?
+  heightCm   Int?
+  zodiac     ZodiacSign?
 
-  // localização
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfileLocation {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   latitude  Decimal? @db.Decimal(9, 6)
   longitude Decimal? @db.Decimal(9, 6)
   city      String?
   state     String?
   country   String?
 
-  // pronome
-  pronoun      Pronoun?
-  pronounOther String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // altura (cm)
-  heightCm Int?
+  @@index([latitude, longitude])
+}
 
-  // intenção e relacionamento
-  intention         Intention?
-  intentionOther    String?
-  relationshipType  RelationshipType?
-  relationshipOther String?
+model UserProfileLifestyle {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // idiomas (array obrigatório com default vazio)
-  languages String[] @default([])
-
-  // “mais sobre mim”
-  zodiac             ZodiacSign?
-  zodiacOther        String?
-  educationLevel     EducationLevel?
-  educationOther     String?
-  communication      CommunicationStyle?
-  communicationOther String?
-
-  // estilo de vida
   pets          PetsPreference?
   petsOther     String?
   drinking      DrinkingStatus?
   smoking       SmokingStatus?
   activityLevel ActivityFrequency?
 
-  // trabalho/escola
+  communication      CommunicationStyle?
+  communicationOther String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfileWorkEducation {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   jobTitle  String?
   company   String?
   education String?
-  livingIn  String?
 
-  // interesses (arrays obrigatórios com default vazio)
+  educationLevel EducationLevel?
+  educationOther String?
+  livingIn       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfileRelationInfo {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  intention         Intention?
+  intentionOther    String?
+  relationshipType  RelationshipType?
+  relationshipOther String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfileInterests {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  languages              String[] @default([])
   interestsActivities    String[] @default([])
   interestsLifestyle     String[] @default([])
   interestsCreativity    String[] @default([])
@@ -250,13 +293,18 @@ model UserProfile {
   interestsNightlife     String[] @default([])
   interestsTvCinema      String[] @default([])
 
-  // foto extra
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfileExtra {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   photo String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([latitude, longitude])
 }
 
 model Payment {
@@ -307,7 +355,7 @@ model Product {
   updatedAt DateTime @updatedAt
 
   payments     Payment[]
-  boostCredits BoostCredit[] // <-- inverso de BoostCredit.product
+  boostCredits BoostCredit[]
 }
 
 model BoostCredit {
@@ -356,10 +404,10 @@ model BoostActivation {
 
 model EnumLabel {
   id        String   @id @default(uuid()) @db.Uuid
-  enumType  String // ex.: "Pronoun", "RelationshipType", "EducationLevel"
-  enumValue String // ex.: "HE_HIM", "MONOGAMY", "MASTER"
-  locale    String // "en", "pt", "es", etc.
-  label     String // tradução humana: "He/Him", "Ele/Dele", "Él/De él"
+  enumType  String
+  enumValue String
+  locale    String
+  label     String
   createdAt DateTime @default(now())
 
   @@unique([enumType, enumValue, locale])

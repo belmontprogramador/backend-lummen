@@ -12,25 +12,23 @@ const upload = multer({
 
 router.use(requireApiKey);
 
-// ---------- ROTAS ----------
+// ---------- ROTAS PRINCIPAIS ----------
 router.post("/", upload.single("photo"), controller.create);
 router.post("/login", controller.login);
 
 router.get("/", requireAuth, controller.list);
 router.get("/:id", requireAuth, controller.getOne);
 
-// ❗ UPDATE SIMPLIFICADO — apenas foto de perfil + campos do User
+// UPDATE SIMPLIFICADO — apenas foto e campos do User
 router.patch("/:id", requireAuth, upload.single("photo"), controller.update);
 
 router.delete("/:id", requireAuth, controller.remove);
-router.post("/change-password", requireAuth, controller.changePassword);
 
 // Pagamento
 router.post("/paid/webhook", controller.setPaidWebhook);
 
-// Senha
+// Senha do usuário logado
 router.post("/update-password", requireAuth, controller.updatePassword);
-router.post("/forgot-password", controller.forgotPassword);
-router.post("/reset-password", controller.resetPassword);
+router.post("/change-password", requireAuth, controller.changePassword);
 
 module.exports = router;

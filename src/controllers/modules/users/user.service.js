@@ -5,12 +5,12 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const fs = require("fs");
 const repository = require("./user.repository");
-const nodemailer = require("nodemailer");
+const profileRepo = require("./profile.repository");
+
 
 const PUBLIC_BASE = "/uploads/users";
 
 const toPublicPath = (file) => (file ? `${PUBLIC_BASE}/${file.filename}` : null);
-
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
 const removeLocalFile = (publicPath) => {
@@ -21,72 +21,69 @@ const removeLocalFile = (publicPath) => {
   } catch (_) {}
 };
 
-// SMTP Hostinger
-const mailTransporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST_LUMMEN || "smtp.hostinger.com",
-  port: Number(process.env.SMTP_PORT_LUMMEN) || 465,
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER_LUMMEN,
-    pass: process.env.SMTP_PASS_LUMMEN,
-  },
-  tls: { rejectUnauthorized: false },
-});
-
-// Email template
-function buildResetPasswordEmailHTML({ name, resetUrl }) {
-  const safeName = name || "there";
-
-  return `
-  <!doctype html>
-  <html>
-  <body style="font-family:Arial;background:#f7f7f7;padding:24px;">
-    <div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:24px;">
-      <h1 style="font-size:20px;margin-bottom:12px;">Reset your password</h1>
-      <p>Hi ${safeName}, click the button below to reset your password:</p>
-      <a href="${resetUrl}" style="display:inline-block;margin-top:16px;padding:12px 20px;background:#111827;color:white;border-radius:8px;text-decoration:none;">
-        Reset password
-      </a>
-    </div>
-  </body>
-  </html>`;
-}
-
 module.exports = {
-  // -------------------------
   // REGISTER
-  // -------------------------
- async register(payload, file) {
+async register(payload, file) {
+  console.log("🟦 [REGISTER] Payload recebido:", payload);
+  console.log("🟦 [REGISTER] File recebido:", file);
+
   let { email, password, isPaid, status, name } = payload;
 
-  if (!email || !password) throw new Error("email e password são obrigatórios");
-  if (!file) throw new Error("photo é obrigatória");
+  if (!email || !password) {
+    console.log("❌ [REGISTER] Faltando email ou senha");
+    throw new Error("email e password são obrigatórios");
+  }
+
+  if (!file) {
+    console.log("❌ [REGISTER] Foto não enviada");
+    throw new Error("photo é obrigatória");
+  }
 
   email = normalizeEmail(email);
 
   const exists = await repository.findByEmail(email);
-  if (exists) throw new Error("E-mail já cadastrado");
+  if (exists) {
+    console.log("❌ [REGISTER] Email já cadastrado:", email);
+    throw new Error("E-mail já cadastrado");
+  }
 
+  console.log("🟦 Hashing senha...");
   const hash = await bcrypt.hash(password, 10);
   const photoPath = toPublicPath(file);
 
+  console.log("🟦 Criando USER...");
   const user = await repository.createUser({
     email,
     password: hash,
     isPaid: Boolean(isPaid),
     status: status || undefined,
-    photo: photoPath,   // <-- Foto de perfil
+    photo: photoPath,
     name: name || "",
   });
 
-  await repository.createUserProfile(user.id);
+  console.log("🟩 USER criado:", user.id);
+
+  // --- PERFIS NOVOS ---
+  console.log("🟦 Criando perfis do usuário…");
+  await profileRepo.createBasic(user.id);
+  await profileRepo.createLocation(user.id);
+  await profileRepo.createLifestyle(user.id);
+  await profileRepo.createWork(user.id);
+  await profileRepo.createRelation(user.id);
+  await profileRepo.createInterests(user.id);
+  await profileRepo.createExtra(user.id);
+  console.log("🟩 Perfis criados");
+
+  console.log("🟦 Criando preferências…");
   await repository.createUserPreference(user.id);
 
-  // ⚠️ GALERIA DEVE COMEÇAR VAZIA
-  // ❌ NÃO criar foto automática aqui!
-
+  console.log("🟦 Criando créditos…");
   const credit = await repository.createBoostCredit(user.id);
+
+  console.log("🟦 Ativando créditos…");
   await repository.createBoostActivation(user.id, credit.id);
+
+  console.log("🟦 Criando pagamento placeholder…");
   await repository.createPlaceholderPayment(user.id);
 
   const token = jwt.sign(
@@ -95,13 +92,13 @@ module.exports = {
     { expiresIn: "7d" }
   );
 
+  console.log("🟩 Usuário criado com sucesso, retornando token.");
+
   const fullUser = await repository.findOne(user.id);
   return { user: fullUser, token };
 },
 
-  // -------------------------
   // LOGIN
-  // -------------------------
   async login(email, password) {
     email = normalizeEmail(email);
 
@@ -121,9 +118,7 @@ module.exports = {
     return { user: fullUser, token };
   },
 
-  // -------------------------
   // LIST
-  // -------------------------
   async list(query, loggedUserId) {
     const page = Math.max(parseInt(query.page || "1"), 1);
     const limit = Math.max(parseInt(query.limit || "20"), 1);
@@ -131,8 +126,6 @@ module.exports = {
 
     const q = (query.q || "").trim().toLowerCase();
     const where = q ? { email: { contains: q } } : {};
-
-    // exclui usuário logado do feed
     where.id = { not: loggedUserId };
 
     const [total, items] = await Promise.all([
@@ -143,36 +136,25 @@ module.exports = {
     return { page, limit, total, pages: Math.ceil(total / limit), items };
   },
 
-  // -------------------------
-  // UPDATE SIMPLIFICADO
-  // -------------------------
-  
+  // UPDATE
   async update(id, data, file) {
-  const USER_FIELDS = ["email", "name", "password", "status", "isPaid", "paidUntil"];
+    const USER_FIELDS = ["email", "name", "password", "status", "isPaid", "paidUntil"];
+    const userData = {};
 
-  const userData = {};
-
-  for (const key in data) {
-    if (USER_FIELDS.includes(key)) {
-      userData[key] = data[key];
+    for (const key in data) {
+      if (USER_FIELDS.includes(key)) userData[key] = data[key];
     }
-  }
 
-  // Foto de perfil (agora correto!)
-  if (file) {
-    userData.photo = toPublicPath(file);
-  }
+    if (file) userData.photo = toPublicPath(file);
 
-  if (Object.keys(userData).length > 0) {
-    await repository.updateUser(id, userData);
-  }
+    if (Object.keys(userData).length > 0) {
+      await repository.updateUser(id, userData);
+    }
 
-  return await repository.findUserBasic(id);
-},
+    return await repository.findUserBasic(id);
+  },
 
-  // -------------------------
   // REMOVE
-  // -------------------------
   async remove(id) {
     const user = await repository.findOne(id);
     if (!user) throw new Error("Usuário não encontrado");
@@ -182,18 +164,14 @@ module.exports = {
     return true;
   },
 
-  // -------------------------
-  // GET ONE COMPLETO
-  // -------------------------
+  // GET ONE
   async getOne(id) {
     const user = await repository.findOne(id);
     if (!user) throw new Error("Usuário não encontrado");
     return user;
   },
 
-  // -------------------------
   // PAGAMENTOS
-  // -------------------------
   async setPaidWebhook({ email, days }) {
     if (!email || !days) throw new Error("email e days são obrigatórios");
 
@@ -210,9 +188,7 @@ module.exports = {
     };
   },
 
-  // -------------------------
-  // PASSWORD
-  // -------------------------
+  // UPDATE PASSWORD
   async updatePassword(userId, { currentPassword, newPassword }) {
     if (!currentPassword || !newPassword)
       throw new Error("currentPassword e newPassword são obrigatórios");
@@ -229,71 +205,7 @@ module.exports = {
     return { success: true, message: "Senha atualizada com sucesso" };
   },
 
-  async forgotPassword(email) {
-    if (!email) throw new Error("email é obrigatório");
-
-    const normalized = email.trim().toLowerCase();
-
-    const user = await repository.findByEmailForReset(normalized);
-
-    // Sempre retornar OK
-    if (!user) {
-      return {
-        success: true,
-        message: "Se este e-mail estiver cadastrado, enviaremos um link de redefinição.",
-      };
-    }
-
-    const resetSecret = process.env.JWT_RESET_SECRET || process.env.JWT_SECRET || "reset_dev_key";
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, type: "password_reset" },
-      resetSecret,
-      { expiresIn: "1h" }
-    );
-
-    const baseUrl =
-      process.env.FRONTEND_RESET_URL || "https://lummenapp.com/reset-password";
-    const resetUrl = `${baseUrl}?token=${encodeURIComponent(token)}`;
-
-    const html = buildResetPasswordEmailHTML({
-      name: user.email.split("@")[0],
-      resetUrl,
-    });
-
-    await mailTransporter.sendMail({
-      from: `"Lummen App" <${process.env.SMTP_USER_LUMMEN}>`,
-      to: user.email,
-      subject: "Lummen – Reset your password",
-      text: `Hi! Use the link below to reset your password:\n${resetUrl}`,
-      html,
-    });
-
-    return {
-      success: true,
-      message: "Se este e-mail estiver cadastrado, enviaremos um link de redefinição.",
-    };
-  },
-
-  async resetPassword({ token, newPassword }) {
-    if (!token || !newPassword)
-      throw new Error("token e newPassword são obrigatórios");
-
-    const resetSecret = process.env.JWT_RESET_SECRET || process.env.JWT_SECRET || "reset_dev_key";
-
-    let payloadDecoded;
-    try {
-      payloadDecoded = jwt.verify(token, resetSecret);
-    } catch (e) {
-      throw new Error("Token inválido ou expirado");
-    }
-
-    const newHash = await bcrypt.hash(newPassword, 10);
-    await repository.updatePassword(payloadDecoded.id, newHash);
-
-    return { success: true, message: "Senha redefinida com sucesso" };
-  },
-
+  // CHANGE PASSWORD
   async changePassword(userId, { currentPassword, newPassword }) {
     if (!currentPassword || !newPassword)
       throw new Error("currentPassword e newPassword são obrigatórios");

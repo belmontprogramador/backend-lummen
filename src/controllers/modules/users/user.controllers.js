@@ -21,34 +21,33 @@ module.exports = {
     }
   },
 
-async list(req, res) {
-  try {
-    const userId = req.user.id; // usuário logado (do JWT)
-    const result = await service.list(req.query, userId);
-    return res.json(result);
-  } catch (err) {
-    return res.status(400).json({ error: err.message });
-  }
-},
+  async list(req, res) {
+    try {
+      const userId = req.user.id;
+      const result = await service.list(req.query, userId);
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  },
 
-async getOne(req, res) {
-  try {
-    const { id } = req.params;
-    const user = await service.getOne(id);
-    return res.json(user);
-  } catch (err) {
-    return res.status(404).json({ error: err.message });
-  }
-},
+  async getOne(req, res) {
+    try {
+      const user = await service.getOne(req.params.id);
+      return res.json(user);
+    } catch (err) {
+      return res.status(404).json({ error: err.message });
+    }
+  },
 
-async update(req, res) {
-  try {
-    const result = await service.update(req.params.id, req.body, req.file);
-    return res.json(result);
-  } catch (err) {
-    return res.status(400).json({ error: err.message });
-  }
-},
+  async update(req, res) {
+    try {
+      const result = await service.update(req.params.id, req.body, req.file);
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  },
 
   async remove(req, res) {
     try {
@@ -60,13 +59,13 @@ async update(req, res) {
   },
 
   async setPaidWebhook(req, res) {
-  try {
-    const result = await service.setPaidWebhook(req.body);
-    return res.json(result);
-  } catch (err) {
-    return res.status(400).json({ error: err.message });
-  }
-},
+    try {
+      const result = await service.setPaidWebhook(req.body);
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  },
 
   async updatePassword(req, res) {
     try {
@@ -77,31 +76,12 @@ async update(req, res) {
     }
   },
 
-  async forgotPassword(req, res) {
-    try {
-      const result = await service.forgotPassword(req.body.email);
-      return res.json(result);
-    } catch (err) {
-      return res.status(400).json({ error: err.message });
-    }
-  },
-
-  async resetPassword(req, res) {
-    try {
-      const result = await service.resetPassword(req.body);
-      return res.json(result);
-    } catch (err) {
-      return res.status(400).json({ error: err.message });
-    }
-  },
-
   async changePassword(req, res) {
-  try {
-    const result = await service.changePassword(req.user.id, req.body);
-    return res.json(result);
-  } catch (err) {
-    return res.status(400).json({ error: err.message });
+    try {
+      const result = await service.changePassword(req.user.id, req.body);
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
-}
-
 };
