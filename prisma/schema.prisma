@@ -148,19 +148,135 @@ enum SexualOrientation {
   OTHER
 }
 
+enum Language {
+  ENGLISH
+  SPANISH
+  PORTUGUESE
+  FRENCH
+  GERMAN
+  ITALIAN
+  CHINESE
+  JAPANESE
+  KOREAN
+  ARABIC
+  HINDI
+  OTHER
+}
+
+enum InterestActivity {
+  TRAVEL
+  COOKING
+  READING
+  HIKING
+  BEACH
+  VIDEO_GAMES
+  PHOTOGRAPHY
+  GYM
+  RUNNING
+  YOGA
+  OTHER
+}
+
+enum InterestLifestyle {
+  HEALTHY
+  VEGAN
+  MINIMALIST
+  ENTREPRENEUR
+  DIGITAL_NOMAD
+  PET_LOVER
+  SPIRITUAL
+  ECO_FRIENDLY
+  OTHER
+}
+
+enum InterestCreativity {
+  ART
+  DRAWING
+  PAINTING
+  WRITING
+  DANCING
+  DESIGN
+  MAKEUP
+  CRAFTS
+  OTHER
+}
+
+enum InterestSports {
+  FOOTBALL
+  SOCCER
+  BASKETBALL
+  TENNIS
+  BOXING
+  MMA
+  SWIMMING
+  CYCLING
+  CROSSFIT
+  RUNNING
+  GYM
+  OTHER
+}
+
+enum InterestMusic {
+  POP
+  ROCK
+  RAP
+  EDM
+  JAZZ
+  CLASSICAL
+  HIPHOP
+  COUNTRY
+  REGGAE
+  BLUES
+  KPOP
+  MPB
+  OTHER
+}
+
+enum InterestNightlife {
+  BARS
+  CLUBS
+  LOUNGES
+  CONCERTS
+  FESTIVALS
+  KARAOKE
+  LIVE_MUSIC
+  OTHER
+}
+
+enum InterestTvCinema {
+  ACTION
+  COMEDY
+  DRAMA
+  HORROR
+  ROMANCE
+  FANTASY
+  SCIFI
+  DOCUMENTARY
+  ANIME
+  SERIES
+  MOVIES
+  OTHER
+}
+
 model User {
   id        String     @id @default(uuid()) @db.Uuid
   email     String     @unique
   name      String?
   password  String
   photo     String
-  isPaid    Boolean    @default(false)
-  paidUntil DateTime?
-  status    UserStatus @default(ACTIVE)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
 
-  // PERFIS QUEBRADOS (NOVOS)
+  isPaid      Boolean    @default(false)
+  paidUntil   DateTime?
+  status      UserStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 🔥 relação com tabela Plan
+  planId   String? @db.Uuid
+  plan     Plan?   @relation(fields: [planId], references: [id])
+
+  // relações existentes
   profileBasic     UserProfileBasic?
   profileLocation  UserProfileLocation?
   profileLifestyle UserProfileLifestyle?
@@ -178,6 +294,22 @@ model User {
   likesReceived Like[]            @relation("LikesReceived")
 }
 
+model Plan {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  title     String
+  features  Json
+  price     Decimal  @db.Decimal(10, 2)
+ durationDays Int 
+ allowedRoutes Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+}
+
+
 model UserPhoto {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @db.Uuid
@@ -194,11 +326,43 @@ model UserPreference {
   userId        String   @id @db.Uuid
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
- preferredGenders Gender[] @default([])
+  // FILTROS PRINCIPAIS
+  preferredGenders Gender[] @default([])
+  preferredOrientations SexualOrientation[] @default([])
+  preferredPronouns Pronoun[] @default([])
+  preferredZodiacs ZodiacSign[] @default([])
 
-  maxDistanceKm Int      @default(50)
-  ageMin        Int      @default(18)
-  ageMax        Int      @default(99)
+  // RELAÇÃO / INTENÇÃO
+  preferredIntentions        Intention[]        @default([])
+  preferredRelationshipTypes RelationshipType[] @default([])
+
+  // LIFESTYLE / HÁBITOS
+  preferredPets          PetsPreference[]     @default([])
+  preferredSmoking       SmokingStatus[]      @default([])
+  preferredDrinking      DrinkingStatus[]     @default([])
+  preferredActivityLevel ActivityFrequency[]   @default([])
+  preferredCommunication CommunicationStyle[] @default([])
+
+  // TRABALHO E EDUCAÇÃO
+  preferredEducationLevels EducationLevel[] @default([])
+
+  // LÍNGUAS
+  preferredLanguages Language[] @default([])
+
+  // INTERESSES
+  preferredInterestsActivities    InterestActivity[]    @default([])
+  preferredInterestsLifestyle     InterestLifestyle[]   @default([])
+  preferredInterestsCreativity    InterestCreativity[]  @default([])
+  preferredInterestsSportsFitness InterestSports[]      @default([])
+  preferredInterestsMusic         InterestMusic[]       @default([])
+  preferredInterestsNightlife     InterestNightlife[]   @default([])
+  preferredInterestsTvCinema      InterestTvCinema[]    @default([])
+
+  // DISTÂNCIA E IDADE
+  maxDistanceKm Int @default(50)
+  ageMin        Int @default(18)
+  ageMax        Int @default(99)
+
   updatedAt     DateTime @updatedAt
 }
 
@@ -213,6 +377,36 @@ model UserProfileBasic {
   pronoun    Pronoun?
   heightCm   Int?
   zodiac     ZodiacSign?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfileRelationInfo {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  intention         Intention?
+  intentionOther    String?
+  relationshipType  RelationshipType?
+  relationshipOther String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfileInterests {
+  userId String @id @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  languages              Language[]            @default([])
+  interestsActivities    InterestActivity[]    @default([])
+  interestsLifestyle     InterestLifestyle[]   @default([])
+  interestsCreativity    InterestCreativity[]  @default([])
+  interestsSportsFitness InterestSports[]      @default([])
+  interestsMusic         InterestMusic[]       @default([])
+  interestsNightlife     InterestNightlife[]   @default([])
+  interestsTvCinema      InterestTvCinema[]    @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -267,36 +461,6 @@ model UserProfileWorkEducation {
   updatedAt DateTime @updatedAt
 }
 
-model UserProfileRelationInfo {
-  userId String @id @db.Uuid
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  intention         Intention?
-  intentionOther    String?
-  relationshipType  RelationshipType?
-  relationshipOther String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model UserProfileInterests {
-  userId String @id @db.Uuid
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  languages              String[] @default([])
-  interestsActivities    String[] @default([])
-  interestsLifestyle     String[] @default([])
-  interestsCreativity    String[] @default([])
-  interestsSportsFitness String[] @default([])
-  interestsMusic         String[] @default([])
-  interestsNightlife     String[] @default([])
-  interestsTvCinema      String[] @default([])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model UserProfileExtra {
   userId String @id @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -311,13 +475,19 @@ model Payment {
   id          String        @id @default(uuid()) @db.Uuid
   userId      String        @db.Uuid
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   amount      Decimal       @db.Decimal(10, 2)
   currency    String        @default("USD")
   status      PaymentStatus @default(PENDING)
+
   referenceId String?
+
   createdAt   DateTime      @default(now())
   paidAt      DateTime?
   expiresAt   DateTime?
+
+  plan        String?       // 🔥 ADICIONADO AQUI
+
   updatedAt   DateTime      @updatedAt
 
   productId String?  @db.Uuid

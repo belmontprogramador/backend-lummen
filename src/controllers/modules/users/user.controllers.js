@@ -57,16 +57,7 @@ module.exports = {
       return res.status(400).json({ error: err.message });
     }
   },
-
-  async setPaidWebhook(req, res) {
-    try {
-      const result = await service.setPaidWebhook(req.body);
-      return res.json(result);
-    } catch (err) {
-      return res.status(400).json({ error: err.message });
-    }
-  },
-
+  
   async updatePassword(req, res) {
     try {
       const result = await service.updatePassword(req.user.id, req.body);

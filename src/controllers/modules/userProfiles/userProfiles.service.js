@@ -8,12 +8,36 @@ const {
   extractInterests,
   extractExtra,
 } = require("./userProfiles.extractors");
-
+const axios = require("axios");
 const { prisma } = require("../../../dataBase/prisma");
-
 const { translateProfileEnums } = require("../../../utils/enumTranslator");
 
-console.log("repo ===>", repo);
+
+async function geocodeLocation({ city, state, country }) {
+  try {
+    const text = [city, state, country].filter(Boolean).join(", ");
+    if (!text) return null;
+
+    const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
+      text
+    )}&apiKey=${process.env.GEOAPIFY_KEY}`;
+
+    const res = await axios.get(url);
+    const data = res.data;
+
+    if (!data.features?.length) return null;
+
+    const { lat, lon } = data.features[0].properties;
+
+    return {
+      latitude: lat,
+      longitude: lon,
+    };
+  } catch (err) {
+    console.log("❌ Erro no geocode:", err);
+    return null;
+  }
+}
 
 
 module.exports = {
@@ -36,21 +60,35 @@ module.exports = {
     return translateProfileEnums(merged, locale);
   },
 
-  async updateProfile(userId, data, locale) {
-    const parts = {
-      basic: extractBasic(data),
-      location: extractLocation(data),
-      lifestyle: extractLifestyle(data),
-      work: extractWork(data),
-      relation: extractRelation(data),
-      interests: extractInterests(data),
-      extra: extractExtra(data),
-    };
+ async updateProfile(userId, data, locale) {
+  const parts = {
+    basic: extractBasic(data),
+    location: extractLocation(data),
+    lifestyle: extractLifestyle(data),
+    work: extractWork(data),
+    relation: extractRelation(data),
+    interests: extractInterests(data),
+    extra: extractExtra(data),
+  };
 
-    await repo.upsertAll(userId, parts);
+  // -----------------------------
+  // 🌍 GEOLOCALIZAÇÃO AUTOMÁTICA
+  // -----------------------------
+  const loc = parts.location;
 
-    return await this.getProfile(userId, locale);
-  },
+  if (loc.city || loc.state || loc.country) {
+    const coords = await geocodeLocation(loc);
+
+    if (coords) {
+      loc.latitude = coords.latitude;
+      loc.longitude = coords.longitude;
+    }
+  }
+
+  await repo.upsertAll(userId, parts);
+
+  return await this.getProfile(userId, locale);
+},
 
   async deleteProfile(userId) {
     // Você pode decidir se vai deletar tudo ou apenas marcar vazio

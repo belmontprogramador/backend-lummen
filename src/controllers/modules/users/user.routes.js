@@ -24,8 +24,6 @@ router.patch("/:id", requireAuth, upload.single("photo"), controller.update);
 
 router.delete("/:id", requireAuth, controller.remove);
 
-// Pagamento
-router.post("/paid/webhook", controller.setPaidWebhook);
 
 // Senha do usuário logado
 router.post("/update-password", requireAuth, controller.updatePassword);

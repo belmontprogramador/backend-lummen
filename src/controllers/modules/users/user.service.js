@@ -1,12 +1,11 @@
 // src/modules/users/user.service.js
 const bcrypt = require("bcrypt");
-const dayjs = require("dayjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const fs = require("fs");
+
 const repository = require("./user.repository");
 const profileRepo = require("./profile.repository");
-
 
 const PUBLIC_BASE = "/uploads/users";
 
@@ -22,83 +21,87 @@ const removeLocalFile = (publicPath) => {
 };
 
 module.exports = {
+
+  // =====================================================================
   // REGISTER
-async register(payload, file) {
-  console.log("🟦 [REGISTER] Payload recebido:", payload);
-  console.log("🟦 [REGISTER] File recebido:", file);
+  // =====================================================================
+  async register(payload, file) {
+    let { email, password, isPaid, status, name, planId } = payload;
 
-  let { email, password, isPaid, status, name } = payload;
+    if (!email || !password)
+      throw new Error("email e password são obrigatórios");
 
-  if (!email || !password) {
-    console.log("❌ [REGISTER] Faltando email ou senha");
-    throw new Error("email e password são obrigatórios");
-  }
+    if (!file)
+      throw new Error("photo é obrigatória");
 
-  if (!file) {
-    console.log("❌ [REGISTER] Foto não enviada");
-    throw new Error("photo é obrigatória");
-  }
+    email = normalizeEmail(email);
 
-  email = normalizeEmail(email);
+    const exists = await repository.findByEmail(email);
+    if (exists) throw new Error("E-mail já cadastrado");
 
-  const exists = await repository.findByEmail(email);
-  if (exists) {
-    console.log("❌ [REGISTER] Email já cadastrado:", email);
-    throw new Error("E-mail já cadastrado");
-  }
+    const hash = await bcrypt.hash(password, 10);
+    const photoPath = toPublicPath(file);
 
-  console.log("🟦 Hashing senha...");
-  const hash = await bcrypt.hash(password, 10);
-  const photoPath = toPublicPath(file);
+    // -------------------------------------------------------------
+    // Se não mandar planId → automaticamente atribui o plano FREE
+    // -------------------------------------------------------------
+    if (!planId) {
+      const freePlan = await repository.findPlanByName("FREE");
+      planId = freePlan?.id || null;
+    }
 
-  console.log("🟦 Criando USER...");
-  const user = await repository.createUser({
-    email,
-    password: hash,
-    isPaid: Boolean(isPaid),
-    status: status || undefined,
-    photo: photoPath,
-    name: name || "",
-  });
+    const user = await repository.createUser({
+      email,
+      password: hash,
+      isPaid: Boolean(isPaid),
+      status: status || undefined,
+      photo: photoPath,
+      name: name || "",
+      planId
+    });
 
-  console.log("🟩 USER criado:", user.id);
+    // ----------------------------------------
+    // Criar perfis padrão do usuário
+    // ----------------------------------------
+    await profileRepo.createBasic(user.id);
+    await profileRepo.createLocation(user.id);
+    await profileRepo.createLifestyle(user.id);
+    await profileRepo.createWork(user.id);
+    await profileRepo.createRelation(user.id);
+    await profileRepo.createInterests(user.id);
+    await profileRepo.createExtra(user.id);
 
-  // --- PERFIS NOVOS ---
-  console.log("🟦 Criando perfis do usuário…");
-  await profileRepo.createBasic(user.id);
-  await profileRepo.createLocation(user.id);
-  await profileRepo.createLifestyle(user.id);
-  await profileRepo.createWork(user.id);
-  await profileRepo.createRelation(user.id);
-  await profileRepo.createInterests(user.id);
-  await profileRepo.createExtra(user.id);
-  console.log("🟩 Perfis criados");
+    await repository.createUserPreference(user.id);
 
-  console.log("🟦 Criando preferências…");
-  await repository.createUserPreference(user.id);
+    // créditos iniciais
+    const credit = await repository.createBoostCredit(user.id);
+    await repository.createBoostActivation(user.id, credit.id);
 
-  console.log("🟦 Criando créditos…");
-  const credit = await repository.createBoostCredit(user.id);
+    // Pagamento placeholder
+    await repository.createPlaceholderPayment(user.id);
 
-  console.log("🟦 Ativando créditos…");
-  await repository.createBoostActivation(user.id, credit.id);
+    // -------------------------------------------------------------
+    // Token com planId
+    // -------------------------------------------------------------
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        isPaid: user.isPaid,
+        paidUntil: user.paidUntil,
+        planId: user.planId
+      },
+      process.env.JWT_SECRET || "secret_key",
+      { expiresIn: "7d" }
+    );
 
-  console.log("🟦 Criando pagamento placeholder…");
-  await repository.createPlaceholderPayment(user.id);
+    const fullUser = await repository.findOne(user.id);
+    return { user: fullUser, token };
+  },
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    process.env.JWT_SECRET || "secret_key",
-    { expiresIn: "7d" }
-  );
-
-  console.log("🟩 Usuário criado com sucesso, retornando token.");
-
-  const fullUser = await repository.findOne(user.id);
-  return { user: fullUser, token };
-},
-
+  // =====================================================================
   // LOGIN
+  // =====================================================================
   async login(email, password) {
     email = normalizeEmail(email);
 
@@ -108,17 +111,26 @@ async register(payload, file) {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) throw new Error("Credenciais inválidas");
 
+    const fullUser = await repository.findOne(user.id);
+
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      {
+        id: user.id,
+        email: user.email,
+        isPaid: user.isPaid,
+        paidUntil: user.paidUntil,
+        planId: user.planId
+      },
       process.env.JWT_SECRET || "secret_key",
       { expiresIn: "7d" }
     );
 
-    const fullUser = await repository.findOne(user.id);
     return { user: fullUser, token };
   },
 
-  // LIST
+  // =====================================================================
+  // LIST USERS
+  // =====================================================================
   async list(query, loggedUserId) {
     const page = Math.max(parseInt(query.page || "1"), 1);
     const limit = Math.max(parseInt(query.limit || "20"), 1);
@@ -136,25 +148,28 @@ async register(payload, file) {
     return { page, limit, total, pages: Math.ceil(total / limit), items };
   },
 
-  // UPDATE
+  // =====================================================================
+  // UPDATE USER
+  // =====================================================================
   async update(id, data, file) {
-    const USER_FIELDS = ["email", "name", "password", "status", "isPaid", "paidUntil"];
+    const FIELDS = ["email", "name", "password", "status", "isPaid", "paidUntil"];
     const userData = {};
 
     for (const key in data) {
-      if (USER_FIELDS.includes(key)) userData[key] = data[key];
+      if (FIELDS.includes(key)) userData[key] = data[key];
     }
 
     if (file) userData.photo = toPublicPath(file);
 
-    if (Object.keys(userData).length > 0) {
+    if (Object.keys(userData).length > 0)
       await repository.updateUser(id, userData);
-    }
 
     return await repository.findUserBasic(id);
   },
 
+  // =====================================================================
   // REMOVE
+  // =====================================================================
   async remove(id) {
     const user = await repository.findOne(id);
     if (!user) throw new Error("Usuário não encontrado");
@@ -164,31 +179,18 @@ async register(payload, file) {
     return true;
   },
 
+  // =====================================================================
   // GET ONE
+  // =====================================================================
   async getOne(id) {
     const user = await repository.findOne(id);
     if (!user) throw new Error("Usuário não encontrado");
     return user;
   },
 
-  // PAGAMENTOS
-  async setPaidWebhook({ email, days }) {
-    if (!email || !days) throw new Error("email e days são obrigatórios");
-
-    const user = await repository.findByEmailBasic(email);
-    if (!user) throw new Error("Usuário não encontrado");
-
-    const expiration = dayjs().add(Number(days), "day").toDate();
-    const updated = await repository.updatePaid(email, expiration);
-
-    return {
-      success: true,
-      message: `Usuário ${email} marcado como pago por ${days} dias.`,
-      data: updated,
-    };
-  },
-
+  // =====================================================================
   // UPDATE PASSWORD
+  // =====================================================================
   async updatePassword(userId, { currentPassword, newPassword }) {
     if (!currentPassword || !newPassword)
       throw new Error("currentPassword e newPassword são obrigatórios");
@@ -205,7 +207,9 @@ async register(payload, file) {
     return { success: true, message: "Senha atualizada com sucesso" };
   },
 
+  // =====================================================================
   // CHANGE PASSWORD
+  // =====================================================================
   async changePassword(userId, { currentPassword, newPassword }) {
     if (!currentPassword || !newPassword)
       throw new Error("currentPassword e newPassword são obrigatórios");

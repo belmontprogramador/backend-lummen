@@ -6,7 +6,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
      "seed": "node prisma/seed.js",
-    "delete:users": "node src/scripts/deleteAllUsers.js"
+    "delete:users": "node src/scripts/deleteAllUsers.js",
+    "seed:plans": "node prisma/seed-plans.js"
   },
   "keywords": [],
   "author": "",

@@ -255,6 +255,158 @@ async function main() {
       { enumType:'ZodiacSign', enumValue:value, locale:'es', label:es },
     ]),
 
+    // 🌎 Language
+...[
+  ['ENGLISH','English','Inglês','Inglés'],
+  ['SPANISH','Spanish','Espanhol','Español'],
+  ['PORTUGUESE','Portuguese','Português','Portugués'],
+  ['FRENCH','French','Francês','Francés'],
+  ['GERMAN','German','Alemão','Alemán'],
+  ['ITALIAN','Italian','Italiano','Italiano'],
+  ['CHINESE','Chinese','Chinês','Chino'],
+  ['JAPANESE','Japanese','Japonês','Japonés'],
+  ['KOREAN','Korean','Coreano','Coreano'],
+  ['ARABIC','Arabic','Árabe','Árabe'],
+  ['HINDI','Hindi','Hindi','Hindi'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'Language', enumValue:value, locale:'en', label:en },
+  { enumType:'Language', enumValue:value, locale:'pt', label:pt },
+  { enumType:'Language', enumValue:value, locale:'es', label:es },
+]),
+
+// 🏃 InterestActivity
+...[
+  ['TRAVEL','Travel','Viagens','Viajes'],
+  ['COOKING','Cooking','Culinária','Cocina'],
+  ['READING','Reading','Leitura','Lectura'],
+  ['HIKING','Hiking','Trilhas','Senderismo'],
+  ['BEACH','Beach','Praia','Playa'],
+  ['VIDEO_GAMES','Video games','Videogames','Videojuegos'],
+  ['PHOTOGRAPHY','Photography','Fotografia','Fotografía'],
+  ['GYM','Gym','Academia','Gimnasio'],
+  ['RUNNING','Running','Corrida','Correr'],
+  ['YOGA','Yoga','Yoga','Yoga'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'InterestActivity', enumValue:value, locale:'en', label:en },
+  { enumType:'InterestActivity', enumValue:value, locale:'pt', label:pt },
+  { enumType:'InterestActivity', enumValue:value, locale:'es', label:es },
+]),
+
+// 🌿 InterestLifestyle
+...[
+  ['HEALTHY','Healthy lifestyle','Estilo saudável','Estilo saludable'],
+  ['VEGAN','Vegan','Vegano','Vegano'],
+  ['MINIMALIST','Minimalist','Minimalista','Minimalista'],
+  ['ENTREPRENEUR','Entrepreneur','Empreendedor','Emprendedor'],
+  ['DIGITAL_NOMAD','Digital nomad','Nômade digital','Nómada digital'],
+  ['PET_LOVER','Pet lover','Amante de pets','Amante de mascotas'],
+  ['SPIRITUAL','Spiritual','Espiritual','Espiritual'],
+  ['ECO_FRIENDLY','Eco-friendly','Sustentável','Ecológico'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'InterestLifestyle', enumValue:value, locale:'en', label:en },
+  { enumType:'InterestLifestyle', enumValue:value, locale:'pt', label:pt },
+  { enumType:'InterestLifestyle', enumValue:value, locale:'es', label:es },
+]),
+
+// 🎨 InterestCreativity
+...[
+  ['ART','Art','Arte','Arte'],
+  ['DRAWING','Drawing','Desenho','Dibujo'],
+  ['PAINTING','Painting','Pintura','Pintura'],
+  ['WRITING','Writing','Escrita','Escritura'],
+  ['DANCING','Dancing','Dança','Baile'],
+  ['DESIGN','Design','Design','Diseño'],
+  ['MAKEUP','Makeup','Maquiagem','Maquillaje'],
+  ['CRAFTS','Crafts','Artesanato','Manualidades'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'InterestCreativity', enumValue:value, locale:'en', label:en },
+  { enumType:'InterestCreativity', enumValue:value, locale:'pt', label:pt },
+  { enumType:'InterestCreativity', enumValue:value, locale:'es', label:es },
+]),
+
+// 🏋️ InterestSports
+...[
+  ['FOOTBALL','Football','Futebol americano','Fútbol americano'],
+  ['SOCCER','Soccer','Futebol','Fútbol'],
+  ['BASKETBALL','Basketball','Basquete','Baloncesto'],
+  ['TENNIS','Tennis','Tênis','Tenis'],
+  ['BOXING','Boxing','Boxe','Boxeo'],
+  ['MMA','MMA','MMA','MMA'],
+  ['SWIMMING','Swimming','Natação','Natación'],
+  ['CYCLING','Cycling','Ciclismo','Ciclismo'],
+  ['CROSSFIT','Crossfit','Crossfit','Crossfit'],
+  ['RUNNING','Running','Corrida','Correr'],
+  ['GYM','Gym','Academia','Gimnasio'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'InterestSports', enumValue:value, locale:'en', label:en },
+  { enumType:'InterestSports', enumValue:value, locale:'pt', label:pt },
+  { enumType:'InterestSports', enumValue:value, locale:'es', label:es },
+]),
+
+// 🎵 InterestMusic
+...[
+  ['POP','Pop','Pop','Pop'],
+  ['ROCK','Rock','Rock','Rock'],
+  ['RAP','Rap','Rap','Rap'],
+  ['EDM','EDM','EDM','EDM'],
+  ['JAZZ','Jazz','Jazz','Jazz'],
+  ['CLASSICAL','Classical','Clássica','Clásica'],
+  ['HIPHOP','Hip Hop','Hip Hop','Hip Hop'],
+  ['COUNTRY','Country','Country','Country'],
+  ['REGGAE','Reggae','Reggae','Reggae'],
+  ['BLUES','Blues','Blues','Blues'],
+  ['KPOP','K-pop','K-pop','K-pop'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'InterestMusic', enumValue:value, locale:'en', label:en },
+  { enumType:'InterestMusic', enumValue:value, locale:'pt', label:pt },
+  { enumType:'InterestMusic', enumValue:value, locale:'es', label:es },
+]),
+
+
+// 🌃 InterestNightlife
+...[
+  ['BARS','Bars','Bares','Bares'],
+  ['CLUBS','Clubs','Clubes','Clubes'],
+  ['LOUNGES','Lounges','Lounge','Lounge'],
+  ['CONCERTS','Concerts','Shows','Conciertos'],
+  ['FESTIVALS','Festivals','Festivais','Festivales'],
+  ['KARAOKE','Karaoke','Karaokê','Karaoke'],
+  ['LIVE_MUSIC','Live music','Música ao vivo','Música en vivo'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'InterestNightlife', enumValue:value, locale:'en', label:en },
+  { enumType:'InterestNightlife', enumValue:value, locale:'pt', label:pt },
+  { enumType:'InterestNightlife', enumValue:value, locale:'es', label:es },
+]),
+
+
+// 🎬 InterestTvCinema
+...[
+  ['ACTION','Action','Ação','Acción'],
+  ['COMEDY','Comedy','Comédia','Comedia'],
+  ['DRAMA','Drama','Drama','Drama'],
+  ['HORROR','Horror','Terror','Terror'],
+  ['ROMANCE','Romance','Romance','Romance'],
+  ['FANTASY','Fantasy','Fantasia','Fantasía'],
+  ['SCIFI','Sci-Fi','Ficção científica','Ciencia ficción'],
+  ['DOCUMENTARY','Documentary','Documentário','Documental'],
+  ['ANIME','Anime','Anime','Anime'],
+  ['SERIES','Series','Séries','Series'],
+  ['MOVIES','Movies','Filmes','Películas'],
+  ['OTHER','Other','Outro','Otro'],
+].flatMap(([value,en,pt,es]) => [
+  { enumType:'InterestTvCinema', enumValue:value, locale:'en', label:en },
+  { enumType:'InterestTvCinema', enumValue:value, locale:'pt', label:pt },
+  { enumType:'InterestTvCinema', enumValue:value, locale:'es', label:es },
+]),
+
+
     // ---------------------------------------------------------
     // 🌈 SexualOrientation
     // ---------------------------------------------------------

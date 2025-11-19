@@ -1,9 +1,18 @@
 const { prisma } = require("../../../dataBase/prisma");
 
 module.exports = {
-  // ---------- FINDERS ----------
+
+  // -------------------------------------------------------------------
+  // FINDERS
+  // -------------------------------------------------------------------
+
   findByEmail(email) {
-    return prisma.user.findUnique({ where: { email } });
+    return prisma.user.findUnique({
+      where: { email },
+      include: {
+        plan: true   // relação válida: user → plan
+      }
+    });
   },
 
   findByIdBasic(id) {
@@ -13,67 +22,94 @@ module.exports = {
     });
   },
 
-  // retorna o usuário completo
-findOne(id) {
-  return prisma.user.findUnique({
-    where: { id },
-    include: {
-      profileBasic: true,
-      profileLocation: true,
-      profileLifestyle: true,
-      profileWork: true,
-      profileRelation: true,
-      profileInterests: true,
-      profileExtra: true,
+  findOne(id) {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        plan: true,               // OK
 
-      preference: true,
-      photos: true,
-      payments: true,
-      credits: true,
-      boosts: true,
-      likesSent: true,
-      likesReceived: true
-    }
-  });
-},
+        profileBasic: true,
+        profileLocation: true,
+        profileLifestyle: true,
+        profileWork: true,
+        profileRelation: true,
+        profileInterests: true,
+        profileExtra: true,
 
-  // ---------- CREATE ----------
-  createUser(data) {
-    return prisma.user.create({ data });
+        preference: true,
+        photos: true,
+
+        // ❗ payments NÃO TEM relation com "plan"
+        payments: true,
+
+        credits: true,
+        boosts: true,
+        likesSent: true,
+        likesReceived: true,
+      }
+    });
   },
 
- createUserProfileBasic(userId) {
-  return prisma.userProfileBasic.create({ data: { userId } });
-},
+  // Buscar plano pelo nome (FREE, PREMIUM etc)
+  findPlanByName(name) {
+    return prisma.plan.findFirst({
+      where: { name }
+    });
+  },
 
-createUserProfileLocation(userId) {
-  return prisma.userProfileLocation.create({ data: { userId } });
-},
+  // -------------------------------------------------------------------
+  // CREATE
+  // -------------------------------------------------------------------
 
-createUserProfileLifestyle(userId) {
-  return prisma.userProfileLifestyle.create({ data: { userId } });
-},
+  createUser(data) {
+    return prisma.user.create({
+      data,
+      include: { plan: true }
+    });
+  },
 
-createUserProfileWorkEducation(userId) {
-  return prisma.userProfileWorkEducation.create({ data: { userId } });
-},
+  updateUserPlan(userId, data) {
+    return prisma.user.update({
+      where: { id: userId },
+      data,
+      include: {
+        plan: true
+      }
+    });
+  },
 
-createUserProfileRelationInfo(userId) {
-  return prisma.userProfileRelationInfo.create({ data: { userId } });
-},
+  createUserProfileBasic(userId) {
+    return prisma.userProfileBasic.create({ data: { userId } });
+  },
 
-createUserProfileInterests(userId) {
-  return prisma.userProfileInterests.create({ data: { userId } });
-},
+  createUserProfileLocation(userId) {
+    return prisma.userProfileLocation.create({ data: { userId } });
+  },
 
-createUserProfileExtra(userId) {
-  return prisma.userProfileExtra.create({ data: { userId } });
-},
+  createUserProfileLifestyle(userId) {
+    return prisma.userProfileLifestyle.create({ data: { userId } });
+  },
+
+  createUserProfileWorkEducation(userId) {
+    return prisma.userProfileWorkEducation.create({ data: { userId } });
+  },
+
+  createUserProfileRelationInfo(userId) {
+    return prisma.userProfileRelationInfo.create({ data: { userId } });
+  },
+
+  createUserProfileInterests(userId) {
+    return prisma.userProfileInterests.create({ data: { userId } });
+  },
+
+  createUserProfileExtra(userId) {
+    return prisma.userProfileExtra.create({ data: { userId } });
+  },
 
   createUserPreference(userId) {
     return prisma.userPreference.create({
       data: {
-         preferredGenders: [],
+        preferredGenders: [],
         userId,
         maxDistanceKm: 50,
         ageMin: 18,
@@ -124,25 +160,29 @@ createUserProfileExtra(userId) {
     });
   },
 
-  // ---------- LIST ----------
+  // -------------------------------------------------------------------
+  // LIST
+  // -------------------------------------------------------------------
+
   list({ skip, limit, where }) {
-  return prisma.user.findMany({
-    skip,
-    take: limit,
-    where,
-    orderBy: { createdAt: "desc" },
-    include: {
-      profileBasic: true,
-      profileLocation: true,
-      profileLifestyle: true,
-      profileWork: true,
-      profileRelation: true,
-      profileInterests: true,
-      profileExtra: true,
-      photos: true,
-    }
-  });
-},
+    return prisma.user.findMany({
+      skip,
+      take: limit,
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        plan: true,
+        profileBasic: true,
+        profileLocation: true,
+        profileLifestyle: true,
+        profileWork: true,
+        profileRelation: true,
+        profileInterests: true,
+        profileExtra: true,
+        photos: true,
+      }
+    });
+  },
 
   count(where) {
     return prisma.user.count({ where });
@@ -159,17 +199,24 @@ createUserProfileExtra(userId) {
         status: true,
         isPaid: true,
         paidUntil: true,
+        planId: true,
         createdAt: true,
         updatedAt: true
       }
     });
   },
 
-  // ---------- UPDATE ----------
+  // -------------------------------------------------------------------
+  // UPDATE
+  // -------------------------------------------------------------------
+
   updateUser(id, data) {
     return prisma.user.update({
       where: { id },
-      data
+      data,
+      include: {
+        plan: true
+      }
     });
   },
 
@@ -180,24 +227,10 @@ createUserProfileExtra(userId) {
     });
   },
 
-  updatePaid(email, expirationDate) {
-    return prisma.user.update({
-      where: { email },
-      data: {
-        isPaid: true,
-        paidUntil: expirationDate
-      },
-      select: {
-        id: true,
-        email: true,
-        isPaid: true,
-        paidUntil: true,
-        updatedAt: true
-      }
-    });
-  },
+  // -------------------------------------------------------------------
+  // DELETE
+  // -------------------------------------------------------------------
 
-  // ---------- DELETE ----------
   deleteUser(id) {
     return prisma.user.delete({ where: { id } });
   }
