@@ -20,7 +20,9 @@ function safeEqual(a, b) {
 
 function requireApiKey(req, res, next) {
   const keys = parseKeys();
+
   if (!keys.length) {
+    console.log("❌ ERRO: API_TOKENS não configurado no backend!");
     return res.status(500).json({ error: 'API_TOKENS não configurado' });
   }
 
@@ -36,9 +38,19 @@ function requireApiKey(req, res, next) {
   if (!candidate && qKey) candidate = qKey;
 
   const ok = keys.some(k => safeEqual(k, candidate));
-  if (!ok) return res.status(401).json({ error: 'Unauthorized (API key inválida)' });
 
-  // marca como validado (opcional, útil p/ debug)
+  if (!ok) {
+    console.log("🚫 API KEY NÃO AUTORIZADA");
+    console.log("🔑 Chave recebida:", candidate || "(nenhuma)");
+    console.log("🔐 Primeiras chaves configuradas:", keys.slice(0, 2)); // não mostra tudo
+    console.log("📍 Rota acessada:", req.originalUrl);
+
+    return res.status(401).json({ 
+      error: 'Unauthorized (API key inválida)' 
+    });
+  }
+
+  // marca como validado
   req.apiKeyValidated = true;
   next();
 }

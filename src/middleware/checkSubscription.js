@@ -1,41 +1,54 @@
-// src/middleware/checkSubscription.js
 const { prisma } = require("../dataBase/prisma");
 
 module.exports = async function checkSubscription(req, res, next) {
   try {
-    // Se não existe usuário autenticado, continua
-    if (!req.user?.id) return next();
+    const userId = req.user?.id;
+    if (!userId) return next();
 
-    // Buscar informações necessárias do usuário
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: userId },
       select: {
         id: true,
         isPaid: true,
-        paidUntil: true
+        paidUntil: true,
+        planId: true
       }
     });
 
-    // Se o usuário não tem assinatura, apenas segue
-    if (!user || !user.paidUntil) return next();
+    if (!user) return next();
 
     const now = new Date();
-    const expiration = new Date(user.paidUntil);
+    const expired = user.paidUntil && new Date(user.paidUntil) < now;
 
-    // Se expirou → só atualiza o banco. Não bloqueia nada.
-    if (expiration < now && user.isPaid === true) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { isPaid: false }
+    if (expired) {
+      console.log(`⚠ Assinatura expirada: usuário ${user.id}`);
+
+      // Buscar plano FREE
+      const freePlan = await prisma.plan.findUnique({
+        where: { name: "free" }
       });
 
-      console.log(`🔔 Assinatura expirada → usuário ${user.id} marcado como isPaid = false`);
+      if (freePlan) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            isPaid: false,
+            paidUntil: null,
+            planId: freePlan.id
+          }
+        });
+
+        // Refletir na request atual
+        req.user.isPaid = false;
+        req.user.paidUntil = null;
+        req.user.planId = freePlan.id;
+      }
     }
 
     return next();
 
   } catch (err) {
     console.error("Erro no checkSubscription:", err);
-    return next(); // nunca bloqueia a rota
+    return next();
   }
 };

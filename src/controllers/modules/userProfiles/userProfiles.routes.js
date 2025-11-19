@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const controller = require("./userProfiles.controller");
-const { auth } = require("../../../utils/auth");
-const { requireApiKey } = require("../../../utils/apiAuth");
+const { auth } = require("../../../middleware/auth");
+const { requireApiKey } = require("../../../middleware/apiAuth");
 
 // Perfil logado
 router.get("/me", requireApiKey, auth, controller.getMe);

@@ -15,40 +15,18 @@ module.exports = {
   // ===============================
   async update(userId, payload) {
 
-  // remover "mode" antes de enviar ao Prisma
-  if ("mode" in payload) {
-    delete payload.mode;
-  }
+    // Apenas remove "mode" se vier do front
+    if ("mode" in payload) {
+      delete payload.mode;
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isPaid: true }
-  });
-
-  if (!user) throw new Error("Usuário não encontrado");
-
-  console.log("🔎 DB isPaid:", user.isPaid);
-
-  const isPaid = user.isPaid;
-
-  const allowedFree = [
-    "maxDistanceKm",
-    "ageMin",
-    "ageMax",
-    "preferredGenders",
-    "preferredOrientations"
-  ];
-
-  if (!isPaid) {
-    const cleaned = {};
-    allowedFree.forEach((key) => {
-      if (payload[key] !== undefined) cleaned[key] = payload[key];
-    });
-    payload = cleaned;
-  }
-
-  return repository.update(userId, payload);
-},
+    // Aqui NÃO EXISTE mais regra de plano!
+    // A rota já valida se é free/premium.
+    // O controller já filtra os campos free.
+    // => o service só salva.
+    
+    return repository.update(userId, payload);
+  },
 
   // ===============================
   // OPTIONS — retorna enums traduzidos

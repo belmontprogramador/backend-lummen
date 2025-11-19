@@ -1,7 +1,7 @@
 // src/modules/passwordReset/passwordReset.routes.js
 const router = require("express").Router();
 const controller = require("./passwordReset.controller");
-const { requireApiKey } = require("../../../utils/apiAuth");
+const { requireApiKey } = require("../../../middleware/apiAuth");
 
 // Todas as rotas precisam de API KEY
 router.use(requireApiKey);

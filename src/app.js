@@ -5,27 +5,30 @@ const morgan = require("morgan");
 const dotenv = require("dotenv");
 const path = require("path");
 
-const { requireAuth } = require("./utils/authUser");
-const paymentAutoExpire = require("./utils/paymentAutoExpire");
+// Middlewares
+const { requireAuth } = require("./middleware/authUser");
+const checkSubscription = require("./middleware/checkSubscription");
 
-// 🔗 Módulos de rotas
+// Módulos de rotas públicas
 const usersModule = require("./controllers/modules/users");
 const passwordResetRoutes = require("./controllers/modules/passwordReset/passwordReset.routes");
+const paymentsModule = require("./controllers/modules/payments");
+const adminRoutes = require("./controllers/modules/admins/");
+const plansModule = require("./controllers/modules/plans");
+
+// Módulos privados
 const userPreferencesModule = require("./controllers/modules/userPreferences");
-const paymentsModule = require("./controllers/modules/payments"); // <- correto
 const feedModule = require("./controllers/modules/feed");
 const userPhotosModule = require("./controllers/modules/usersPhotos");
 const userProfilesModule = require("./controllers/modules/userProfiles");
-
 const matchRoutes = require("./routes/users/match.routes");
-const adminRoutes = require("./routes/admins/admin.routes");
 
 dotenv.config({ quiet: true });
 
 const app = express();
 
 /* ================================================
-   🧩 Middlewares Globais
+   🧩 GLOBAL MIDDLEWARES
 ================================================ */
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
@@ -42,31 +45,39 @@ app.use(
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 /* ================================================
-   🔓 ROTAS PÚBLICAS — SEM requireAuth
+   🔓 ROTAS PÚBLICAS
 ================================================ */
-// login, register, getOne básico
+// login / register / verify / admin login
 app.use("/users", usersModule);
+app.use("/admins", adminRoutes);
+app.use("/plans", plansModule);
 
-// reset de senha
+// reset password
 app.use("/password", passwordResetRoutes);
 
-// webhook e endpoints públicos de pagamento
+// webhook / pagamentos externos
 app.use("/payments", paymentsModule);
 
 /* ================================================
-   🔐 ROTAS PRIVADAS — Protegidas
-   requer login → requireAuth
-   autovalidação de pagamento → paymentAutoExpire
+   🔐 PROTEÇÃO GLOBAL — APÓS requireAuth
 ================================================ */
-app.use(requireAuth, paymentAutoExpire);
+app.use(requireAuth);
+// 🔥 Expiração automática + migração para FREE
+app.use(checkSubscription);
 
-// módulos privados
+/* ================================================
+   🔒 ROTAS PRIVADAS
+================================================ */
+// agora tudo está protegido por:
+// - requireAuth
+// - checkSubscription
+// - dynamicRoute (somente onde usar)
+
 app.use("/user-photos", userPhotosModule);
 app.use("/user-profiles", userProfilesModule);
 app.use("/user-preferences", userPreferencesModule);
 app.use("/feed", feedModule);
 app.use("/matches", matchRoutes);
-app.use("/admins", adminRoutes);
 
 /* ================================================
    🔥 TESTE

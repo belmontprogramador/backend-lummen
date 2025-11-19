@@ -3,8 +3,8 @@ const router = require("express").Router();
 const multer = require("multer");
 const path = require("path");
 const controller = require("./user.controllers");
-const { requireApiKey } = require("../../../utils/apiAuth");
-const { requireAuth } = require("../../../utils/authUser");
+const { requireApiKey } = require("../../../middleware/apiAuth");
+const { requireAuth } = require("../../../middleware/authUser");
 
 const upload = multer({
   dest: path.join(__dirname, "../../../uploads/users")

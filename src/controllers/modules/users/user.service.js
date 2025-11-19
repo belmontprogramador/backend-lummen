@@ -22,111 +22,174 @@ const removeLocalFile = (publicPath) => {
 
 module.exports = {
 
-  // =====================================================================
-  // REGISTER
-  // =====================================================================
-  async register(payload, file) {
-    let { email, password, isPaid, status, name, planId } = payload;
+// =====================================================================
+// REGISTER — com logs completos de criação
+// =====================================================================
+async register(payload, file) {
+  console.log("\n==============================");
+  console.log("🟦 INICIANDO REGISTRO DO USUÁRIO");
+  console.log("==============================");
 
-    if (!email || !password)
-      throw new Error("email e password são obrigatórios");
+  let { email, password, isPaid, status, name, planId } = payload;
 
-    if (!file)
-      throw new Error("photo é obrigatória");
+  if (!email || !password) throw new Error("email e password são obrigatórios");
+  if (!file) throw new Error("photo é obrigatória");
 
-    email = normalizeEmail(email);
+  email = normalizeEmail(email);
 
-    const exists = await repository.findByEmail(email);
-    if (exists) throw new Error("E-mail já cadastrado");
+  const exists = await repository.findByEmail(email);
+  if (exists) throw new Error("E-mail já cadastrado");
 
-    const hash = await bcrypt.hash(password, 10);
-    const photoPath = toPublicPath(file);
+  console.log("✔ Email validado:", email);
 
-    // -------------------------------------------------------------
-    // Se não mandar planId → automaticamente atribui o plano FREE
-    // -------------------------------------------------------------
-    if (!planId) {
-      const freePlan = await repository.findPlanByName("FREE");
-      planId = freePlan?.id || null;
+  const hash = await bcrypt.hash(password, 10);
+  const photoPath = toPublicPath(file);
+
+  // -------------------------------------------------------------
+  // Buscar plano FREE caso não venha planId
+  // -------------------------------------------------------------
+  let freePlan = null;
+
+  if (!planId) {
+    freePlan = await repository.findPlanByName("free");
+    if (!freePlan) {
+      console.log("❌ ERRO: Plano FREE não encontrado!");
+      throw new Error("Plano FREE não existe. Crie via seed primeiro.");
     }
+    planId = freePlan.id;
 
-    const user = await repository.createUser({
-      email,
-      password: hash,
-      isPaid: Boolean(isPaid),
-      status: status || undefined,
-      photo: photoPath,
-      name: name || "",
-      planId
+    console.log("✔ Plano FREE aplicado automaticamente:", planId);
+  }
+
+  // -------------------------------------------------------------
+  // Criar usuário
+  // -------------------------------------------------------------
+  const user = await repository.createUser({
+    email,
+    password: hash,
+    isPaid: Boolean(isPaid),
+    status: status || undefined,
+    photo: photoPath,
+    name: name || "",
+    planId
+  });
+
+  console.log("✔ Usuário criado:", user.id);
+
+  // ----------------------------------------
+  // Criar perfis padrão
+  // ----------------------------------------
+  await profileRepo.createBasic(user.id);
+  await profileRepo.createLocation(user.id);
+  await profileRepo.createLifestyle(user.id);
+  await profileRepo.createWork(user.id);
+  await profileRepo.createRelation(user.id);
+  await profileRepo.createInterests(user.id);
+  await profileRepo.createExtra(user.id);
+
+  console.log("✔ Perfis criados com sucesso");
+
+  // Preferências
+  await repository.createUserPreference(user.id);
+  console.log("✔ Preferências padrão criadas");
+
+  // Créditos / boost
+  const credit = await repository.createBoostCredit(user.id);
+  await repository.createBoostActivation(user.id, credit.id);
+  console.log("✔ Créditos e boost inicial criados");
+
+  // Pagamento placeholder
+  await repository.createPlaceholderPayment(user.id);
+  console.log("✔ Pagamento placeholder criado");
+
+  // -------------------------------------------------------------
+  // Token
+  // -------------------------------------------------------------
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      isPaid: user.isPaid,
+      paidUntil: user.paidUntil,
+      planId: user.planId
+    },
+    process.env.JWT_SECRET || "secret_key",
+    { expiresIn: "7d" }
+  );
+
+  console.log("✔ Token gerado");
+
+  const fullUser = await repository.findOne(user.id);
+
+  console.log("🟩 REGISTRO FINALIZADO COM SUCESSO");
+  console.log("==============================\n");
+
+  return { user: fullUser, token };
+},
+
+ // =====================================================================
+// LOGIN — com atualização automática de assinatura expirada
+// =====================================================================
+async login(email, password) {
+  email = normalizeEmail(email);
+
+  const user = await repository.findByEmail(email);
+  if (!user) throw new Error("Credenciais inválidas");
+
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) throw new Error("Credenciais inválidas");
+
+  // -------------------------------------------------------------
+  // 🔥 1) Checar expiração
+  // -------------------------------------------------------------
+  const now = new Date();
+  const expired = user.paidUntil && new Date(user.paidUntil) < now;
+
+  let finalPlanId = user.planId;
+  let finalIsPaid = user.isPaid;
+  let finalPaidUntil = user.paidUntil;
+
+  if (expired && user.isPaid) {
+    // Buscar plano FREE
+    const freePlan = await repository.findPlanByName("free");
+
+    // Atualizar banco
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isPaid: false,
+        paidUntil: null,
+        planId: freePlan.id
+      }
     });
 
-    // ----------------------------------------
-    // Criar perfis padrão do usuário
-    // ----------------------------------------
-    await profileRepo.createBasic(user.id);
-    await profileRepo.createLocation(user.id);
-    await profileRepo.createLifestyle(user.id);
-    await profileRepo.createWork(user.id);
-    await profileRepo.createRelation(user.id);
-    await profileRepo.createInterests(user.id);
-    await profileRepo.createExtra(user.id);
+    finalPlanId = freePlan.id;
+    finalIsPaid = false;
+    finalPaidUntil = null;
+  }
 
-    await repository.createUserPreference(user.id);
+  // -------------------------------------------------------------
+  // 🔥 2) Buscar usuário completo com plano atualizado
+  // -------------------------------------------------------------
+  const fullUser = await repository.findOne(user.id);
 
-    // créditos iniciais
-    const credit = await repository.createBoostCredit(user.id);
-    await repository.createBoostActivation(user.id, credit.id);
+  // -------------------------------------------------------------
+  // 🔥 3) Gerar token consistente
+  // -------------------------------------------------------------
+  const token = jwt.sign(
+    {
+      id: fullUser.id,
+      email: fullUser.email,
+      isPaid: finalIsPaid,
+      paidUntil: finalPaidUntil,
+      planId: finalPlanId
+    },
+    process.env.JWT_SECRET || "secret_key",
+    { expiresIn: "7d" }
+  );
 
-    // Pagamento placeholder
-    await repository.createPlaceholderPayment(user.id);
-
-    // -------------------------------------------------------------
-    // Token com planId
-    // -------------------------------------------------------------
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        isPaid: user.isPaid,
-        paidUntil: user.paidUntil,
-        planId: user.planId
-      },
-      process.env.JWT_SECRET || "secret_key",
-      { expiresIn: "7d" }
-    );
-
-    const fullUser = await repository.findOne(user.id);
-    return { user: fullUser, token };
-  },
-
-  // =====================================================================
-  // LOGIN
-  // =====================================================================
-  async login(email, password) {
-    email = normalizeEmail(email);
-
-    const user = await repository.findByEmail(email);
-    if (!user) throw new Error("Credenciais inválidas");
-
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) throw new Error("Credenciais inválidas");
-
-    const fullUser = await repository.findOne(user.id);
-
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        isPaid: user.isPaid,
-        paidUntil: user.paidUntil,
-        planId: user.planId
-      },
-      process.env.JWT_SECRET || "secret_key",
-      { expiresIn: "7d" }
-    );
-
-    return { user: fullUser, token };
-  },
+  return { user: fullUser, token };
+},
 
   // =====================================================================
   // LIST USERS

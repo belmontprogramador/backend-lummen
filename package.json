@@ -7,7 +7,9 @@
     "start": "node src/server.js",
      "seed": "node prisma/seed.js",
     "delete:users": "node src/scripts/deleteAllUsers.js",
-    "seed:plans": "node prisma/seed-plans.js"
+    "seed:plans": "node prisma/seed-plans.js",
+    "seed:routes": "node prisma/seedRoutes.js",
+    "seed:free": "node prisma/seed-plan-free.js"
   },
   "keywords": [],
   "author": "",

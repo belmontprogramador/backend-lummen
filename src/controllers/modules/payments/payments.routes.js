@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const controller = require("./payments.controller");
-const { requireApiKey } = require("../../../utils/apiAuth");
-const { requireAuth } = require("../../../utils/authUser");
+const { requireApiKey } = require("../../../middleware/apiAuth");
+const { requireAuth } = require("../../../middleware/authUser");
 
 // Todas rotas de pagamento usam API KEY
 router.use(requireApiKey);
