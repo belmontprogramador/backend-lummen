@@ -57,87 +57,90 @@ module.exports = {
     return prisma.plan.findUnique({ where: { id } });
   },
 
+// -------------------------------------------------------------
+// UPDATE PLAN
+// -------------------------------------------------------------
+async update(id, data) {
+  const existing = await prisma.plan.findUnique({ where: { id } });
+
+  if (!existing) {
+    throw new Error("Plano não encontrado.");
+  }
+
+  const isFree = existing.name === "free";
+
+  const {
+    name,
+    title,
+    features,
+    price,
+    durationDays,
+    allowedRoutes,
+    paidRoutes
+  } = data;
+
+  // -----------------------------------------------
+  // ❌ BLOQUEIOS PARA O PLANO FREE
+  // -----------------------------------------------
+  if (isFree) {
+    if (name && name !== "free") {
+      throw new Error("O nome do plano FREE não pode ser alterado.");
+    }
+
+    if (title !== undefined && title !== existing.title) {
+      throw new Error("O título do plano FREE não pode ser alterado.");
+    }
+
+    if (price !== undefined && price !== existing.price) {
+      throw new Error("O preço do plano FREE não pode ser alterado.");
+    }
+
+    if (durationDays !== undefined && durationDays !== existing.durationDays) {
+      throw new Error("A duração do plano FREE não pode ser alterada.");
+    }
+
+    if (paidRoutes && paidRoutes.length > 0) {
+      throw new Error("O plano FREE não pode ter rotas pagas.");
+    }
+  }
+
   // -------------------------------------------------------------
-  // UPDATE PLAN
+  // RECONSTRUIR routePayment SOMENTE SE houver allowedRoutes
   // -------------------------------------------------------------
-  async update(id, data) {
-    const existing = await prisma.plan.findUnique({ where: { id } });
+  let routePayment = undefined;
 
-    if (!existing) {
-      throw new Error("Plano não encontrado.");
-    }
-
-    const isFree = existing.name === "free";
-
-    const {
-      name,
-      title,
-      features,
-      price,
-      durationDays,
-      allowedRoutes,
-      paidRoutes
-    } = data;
-
-    // -----------------------------------------------
-    // ❌ BLOQUEIOS PARA O PLANO FREE
-    // -----------------------------------------------
-    if (isFree) {
-      if (name && name !== "free") {
-        throw new Error("O nome do plano FREE não pode ser alterado.");
-      }
-
-      if (price !== undefined && price !== existing.price) {
-        throw new Error("O preço do plano FREE não pode ser alterado.");
-      }
-
-      if (durationDays !== undefined && durationDays !== existing.durationDays) {
-        throw new Error("A duração do plano FREE não pode ser alterada.");
-      }
-
-      if (allowedRoutes && JSON.stringify(allowedRoutes) !== JSON.stringify(existing.allowedRoutes)) {
-        throw new Error("As rotas permitidas do plano FREE não podem ser alteradas.");
-      }
-
-      if (paidRoutes && paidRoutes.length > 0) {
-        throw new Error("O plano FREE não pode ter rotas pagas.");
-      }
-    }
-
-    // -------------------------------------------------------------
-    // RECONSTRUIR routePayment SOMENTE SE vierem novos dados
-    // -------------------------------------------------------------
-    let routePayment = undefined;
-
-    if (allowedRoutes && paidRoutes) {
-      routePayment = {};
-      allowedRoutes.forEach(tag => {
-        routePayment[tag] = paidRoutes.includes(tag);
-      });
-    }
-
-    // -------------------------------------------------------------
-    // ATUALIZAÇÃO PERMITIDA
-    // -------------------------------------------------------------
-    return prisma.plan.update({
-      where: { id },
-      data: {
-        // ❌ FREE cannot change name
-        ...(name && !isFree && { name }),
-
-        // ✔ FREE pode mudar título e features
-        ...(title && { title }),
-        ...(features && { features }),
-
-        // ❌ FREE cannot change price/duration
-        ...(price !== undefined && !isFree && { price }),
-        ...(durationDays !== undefined && !isFree && { durationDays }),
-
-        ...(allowedRoutes && { allowedRoutes }),
-        ...(routePayment && { routePayment })
-      }
+  if (allowedRoutes) {
+    routePayment = {};
+    allowedRoutes.forEach(tag => {
+      // FREE → sempre false (rota gratuita)
+      const isPaid = !isFree && paidRoutes?.includes(tag);
+      routePayment[tag] = isPaid;
     });
-  },
+  }
+
+  // -------------------------------------------------------------
+  // ATUALIZAÇÃO PERMITIDA
+  // -------------------------------------------------------------
+  return prisma.plan.update({
+    where: { id },
+    data: {
+      // ❌ FREE não pode mudar name, title, price, durationDays
+      ...(name && !isFree && { name }),
+      ...(title !== undefined && !isFree && { title }),
+      ...(price !== undefined && !isFree && { price }),
+      ...(durationDays !== undefined && !isFree && { durationDays }),
+
+      // ✔ FREE pode editar apenas features
+      ...(features !== undefined && { features }),
+
+      // ✔ FREE pode editar allowedRoutes
+      ...(allowedRoutes && { allowedRoutes }),
+
+      // ✔ FREE pode atualizar routePayment (sempre false)
+      ...(routePayment && { routePayment })
+    }
+  });
+},
 
   // -------------------------------------------------------------
   // DELETE PLAN

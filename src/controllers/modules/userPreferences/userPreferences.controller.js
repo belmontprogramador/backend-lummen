@@ -10,6 +10,16 @@ module.exports = {
     }
   },
 
+  async getPublic(req, res) {
+  try {
+    const prefs = await service.getPublic(req.params.userId);
+    return res.json(prefs);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+},
+
+
 async updateFree(req, res) {
     try {
       const allowedFields = [

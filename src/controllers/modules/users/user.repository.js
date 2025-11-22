@@ -6,14 +6,24 @@ module.exports = {
   // FINDERS
   // -------------------------------------------------------------------
 
-  findByEmail(email) {
-    return prisma.user.findUnique({
-      where: { email },
-      include: {
-        plan: true   // relação válida: user → plan
+findByEmail(email) {
+  return prisma.user.findUnique({
+    where: { email },
+    include: {
+      plan: {
+        select: {
+          id: true,
+          name: true,
+          title: true,
+          price: true,
+          durationDays: true,
+          allowedRoutes: true,
+          routePayment: true
+        }
       }
-    });
-  },
+    }
+  });
+},
 
   findByIdBasic(id) {
     return prisma.user.findUnique({
@@ -26,22 +36,27 @@ module.exports = {
     return prisma.user.findUnique({
       where: { id },
       include: {
-        plan: true,               // OK
+        plan: {
+          select: {
+            id: true,
+            name: true,
+            title: true,
+            price: true,
+            durationDays: true,
+            allowedRoutes: true,
+            routePayment: true
+          }
+        },
 
-        profileBasic: true,
-        profileLocation: true,
-        profileLifestyle: true,
-        profileWork: true,
-        profileRelation: true,
-        profileInterests: true,
-        profileExtra: true,
+        // 🔥 Novo perfil unificado
+        profile: true,
 
+        // 🔹 Preferências
         preference: true,
+
+        // 🔹 Outros relacionamentos
         photos: true,
-
-        // ❗ payments NÃO TEM relation com "plan"
         payments: true,
-
         credits: true,
         boosts: true,
         likesSent: true,
@@ -50,7 +65,6 @@ module.exports = {
     });
   },
 
-  // Buscar plano pelo nome (FREE, PREMIUM etc)
   findPlanByName(name) {
     return prisma.plan.findFirst({
       where: { name }
@@ -64,7 +78,19 @@ module.exports = {
   createUser(data) {
     return prisma.user.create({
       data,
-      include: { plan: true }
+      include: {
+        plan: {
+          select: {
+            id: true,
+            name: true,
+            title: true,
+            price: true,
+            durationDays: true,
+            allowedRoutes: true,
+            routePayment: true
+          }
+        }
+      }
     });
   },
 
@@ -73,47 +99,55 @@ module.exports = {
       where: { id: userId },
       data,
       include: {
-        plan: true
+        plan: {
+          select: {
+            id: true,
+            name: true,
+            title: true,
+            price: true,
+            durationDays: true,
+            allowedRoutes: true,
+            routePayment: true
+          }
+        }
       }
     });
   },
 
-  createUserProfileBasic(userId) {
-    return prisma.userProfileBasic.create({ data: { userId } });
-  },
-
-  createUserProfileLocation(userId) {
-    return prisma.userProfileLocation.create({ data: { userId } });
-  },
-
-  createUserProfileLifestyle(userId) {
-    return prisma.userProfileLifestyle.create({ data: { userId } });
-  },
-
-  createUserProfileWorkEducation(userId) {
-    return prisma.userProfileWorkEducation.create({ data: { userId } });
-  },
-
-  createUserProfileRelationInfo(userId) {
-    return prisma.userProfileRelationInfo.create({ data: { userId } });
-  },
-
-  createUserProfileInterests(userId) {
-    return prisma.userProfileInterests.create({ data: { userId } });
-  },
-
-  createUserProfileExtra(userId) {
-    return prisma.userProfileExtra.create({ data: { userId } });
+  // 🔥 Novo: criação de perfil unificado
+  createUserProfile(userId) {
+    return prisma.userProfile.create({
+      data: { userId }
+    });
   },
 
   createUserPreference(userId) {
     return prisma.userPreference.create({
       data: {
-        preferredGenders: [],
         userId,
+        preferredGenders: [],
+        preferredOrientations: [],
+        preferredPronouns: [],
+        preferredZodiacs: [],
+        preferredIntentions: [],
+        preferredRelationshipTypes: [],
+        preferredPets: [],
+        preferredSmoking: [],
+        preferredDrinking: [],
+        preferredActivityLevel: [],
+        preferredCommunication: [],
+        preferredEducationLevels: [],
+        preferredLanguages: [],
+        preferredInterestsActivities: [],
+        preferredInterestsLifestyle: [],
+        preferredInterestsCreativity: [],
+        preferredInterestsSportsFitness: [],
+        preferredInterestsMusic: [],
+        preferredInterestsNightlife: [],
+        preferredInterestsTvCinema: [],
         maxDistanceKm: 50,
         ageMin: 18,
-        ageMax: 99
+        ageMax: 99,
       }
     });
   },
@@ -171,15 +205,20 @@ module.exports = {
       where,
       orderBy: { createdAt: "desc" },
       include: {
-        plan: true,
-        profileBasic: true,
-        profileLocation: true,
-        profileLifestyle: true,
-        profileWork: true,
-        profileRelation: true,
-        profileInterests: true,
-        profileExtra: true,
-        photos: true,
+        plan: {
+          select: {
+            id: true,
+            name: true,
+            title: true,
+            price: true,
+            durationDays: true,
+            allowedRoutes: true,
+            routePayment: true
+          }
+        },
+
+        profile: true,
+        photos: true
       }
     });
   },
@@ -215,7 +254,17 @@ module.exports = {
       where: { id },
       data,
       include: {
-        plan: true
+        plan: {
+          select: {
+            id: true,
+            name: true,
+            title: true,
+            price: true,
+            durationDays: true,
+            allowedRoutes: true,
+            routePayment: true
+          }
+        }
       }
     });
   },

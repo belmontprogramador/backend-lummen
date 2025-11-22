@@ -1,26 +1,56 @@
 const router = require("express").Router();
 const { requireAuth } = require("../../../middleware/authUser");
 const { requireApiKey } = require("../../../middleware/apiAuth");
-const dynamicRoute = require("../../../middleware/dynamicRoute"); 
+const dynamicRoute = require("../../../middleware/dynamicRoute");
 const controller = require("./feed.controllers");
 
-// 🔐 1) API KEY obrigatória
+// 🔐 API KEY
 router.use(requireApiKey);
 
-// 🔒 2) Login obrigatório
+// 🔒 Login obrigatório
 router.use(requireAuth);
 
-// 🔒 3) Rota: listar feed — tag: "feed_list"
+// ⭐ FEED FREE
 router.get(
-  "/",
-  dynamicRoute("feed_list"),
+  "/free",
+  dynamicRoute("feed_list_free"),
+  (req, res, next) => {
+    req.user.routeTag = "feed_list_free";
+    next();
+  },
   controller.list
 );
 
-// 🔒 4) Rota: pegar item específico — tag: "feed_view"
+// ⭐ FEED PREMIUM
 router.get(
-  "/:id",
-  dynamicRoute("feed_view"),
+  "/premium",
+  dynamicRoute("feed_list_premium"),
+  (req, res, next) => {
+    req.user.routeTag = "feed_list_premium";
+    next();
+  },
+  controller.list
+);
+
+// ⭐ ITEM ESPECÍFICO FREE
+router.get(
+  "/free/:id",
+  dynamicRoute("feed_view_free"),
+  (req, res, next) => {
+    req.user.routeTag = "feed_view_free";
+    next();
+  },
+  controller.getOne
+);
+
+// ⭐ ITEM ESPECÍFICO PREMIUM
+router.get(
+  "/premium/:id",
+  dynamicRoute("feed_view_premium"),
+  (req, res, next) => {
+    req.user.routeTag = "feed_view_premium";
+    next();
+  },
   controller.getOne
 );
 

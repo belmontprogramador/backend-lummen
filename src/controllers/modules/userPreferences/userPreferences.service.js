@@ -10,6 +10,10 @@ module.exports = {
     return repository.get(userId);
   },
 
+  get(userId) {
+  return prisma.userPreference.findUnique({ where: { userId } });
+},
+
   // ===============================
   // UPDATE — salva preferências do usuário
   // ===============================

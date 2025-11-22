@@ -1,44 +1,63 @@
+// src/controllers/modules/userPreferences/userPreferences.routes.js
 const router = require("express").Router();
 const controller = require("./userPreferences.controller");
 
 const { requireAuth } = require("../../../middleware/authUser");
 const { requireApiKey } = require("../../../middleware/apiAuth");
 
-const requireRouteAccess = require("../../../middleware/requireRouteAccess");
-const requirePaidPlan = require("../../../middleware/requirePaidPlan");
+const dynamicRoute = require("../../../middleware/dynamicRoute");
 
-// 🔐 1) Todas as rotas exigem API KEY
+// 🔐 Todas as rotas exigem API KEY
 router.use(requireApiKey);
 
-// 🔒 2) GET: buscar preferências do usuário
-// (não precisa de pagamento nem rota especial)
+// 🔒 Todas rotas exigem autenticação
+router.use(requireAuth);
+
+/* ============================================
+   GET — Buscar preferências (sem dynamicRoute)
+   FRONT usa: GET /user-preferences
+============================================ */
 router.get(
-  "/",
-  requireAuth,
+  "/", 
   controller.get
 );
 
-// 🔒 3) PATCH FREE — precisa ter permissão da rota
+/* ============================================
+   GET — Preferências públicas de outro usuário
+   FRONT usa: GET /user-preferences/:userId/public
+============================================ */
+router.get(
+  "/:userId/public",
+  dynamicRoute("preferences_get_public"),
+  controller.getPublic
+);
+
+/* ============================================
+   PATCH FREE — atualização sem pagamento
+   FRONT usa: PATCH /user-preferences/free
+============================================ */
 router.patch(
   "/free",
-  requireAuth,
-  requireRouteAccess("preferences_free"),
+  dynamicRoute("preferences_update_free"),
   controller.updateFree
 );
 
-// 🔒 4) PATCH PREMIUM — precisa ter plano pago + permissão da rota
+/* ============================================
+   PATCH PREMIUM — atualização com plano
+   FRONT usa: PATCH /user-preferences/premium
+============================================ */
 router.patch(
   "/premium",
-  requireAuth,
-  requirePaidPlan(),                // 🔥 verificar pagamento ativo
-  requireRouteAccess("preferences_premium"),  // 🔥 verificar rota liberada pelo plano
+  dynamicRoute("preferences_update_premium"),
   controller.updatePremium
 );
 
-// 🔒 5) OPTIONS — apenas usuário logado
+/* ============================================
+   OPTIONS — apenas leitura
+   FRONT usa: GET /user-preferences/options
+============================================ */
 router.get(
   "/options",
-  requireAuth,
   controller.options
 );
 

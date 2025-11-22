@@ -10,13 +10,16 @@ const upload = multer({
   dest: path.join(__dirname, "../../../uploads/users")
 });
 
+router.post("/login", controller.login);
+
 router.use(requireApiKey);
 
 // ---------- ROTAS PRINCIPAIS ----------
 router.post("/", upload.single("photo"), controller.create);
-router.post("/login", controller.login);
+
 
 router.get("/", requireAuth, controller.list);
+router.get("/me", requireAuth, controller.me);
 router.get("/:id", requireAuth, controller.getOne);
 
 // UPDATE SIMPLIFICADO — apenas foto e campos do User

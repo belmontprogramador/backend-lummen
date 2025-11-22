@@ -31,6 +31,15 @@ module.exports = {
     }
   },
 
+  async me(req, res) {
+  try {
+    const user = await service.me(req.user.id);
+    return res.json(user);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+},
+
   async getOne(req, res) {
     try {
       const user = await service.getOne(req.params.id);

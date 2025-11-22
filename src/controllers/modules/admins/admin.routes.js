@@ -1,22 +1,25 @@
 const router = require("express").Router();
 const controller = require("./admin.controller");
-const { auth, requireRole } = require("../../../middleware/auth");
-const { requireApiKey } = require("../../../middleware/apiAuth");
+const { auth, requireRole } = require("../../../middleware/auth"); 
+const { requireAdminApiKey } = require("../../../middleware/requireAdminApiKey");
 
-// ⚠️ Somente rotas privadas usam API KEY
-router.post("/login", controller.login);   // 👈 LOGIN sem API key
 
-// 🔐 Daqui para frente exige API KEY
-router.use(requireApiKey);
+// LOGIN (sem API key)
+router.post("/login", controller.login);
+
+router.use(requireAdminApiKey);
+
+// A partir daqui → precisa token de ADMIN
+router.use(auth);
 
 // ---------- AUTH ----------
-router.get("/me", auth, controller.me);
+router.get("/me", controller.me);
 
 // ---------- CRUD ----------
-router.post("/", auth, requireRole("SUPER"), controller.create);
-router.get("/", auth, requireRole("SUPER", "ADMIN"), controller.list);
-router.get("/:id", auth, requireRole("SUPER", "ADMIN"), controller.getOne);
-router.put("/:id", auth, requireRole("SUPER", "ADMIN"), controller.update);
-router.delete("/:id", auth, requireRole("SUPER"), controller.remove);
+router.post("/",  requireRole("SUPER"), controller.create);
+router.get("/",   requireRole("SUPER", "ADMIN"), controller.list);
+router.get("/:id", requireRole("SUPER", "ADMIN"), controller.getOne);
+router.put("/:id", requireRole("SUPER", "ADMIN"), controller.update);
+router.delete("/:id", requireRole("SUPER"), controller.remove);
 
 module.exports = router;

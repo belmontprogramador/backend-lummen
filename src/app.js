@@ -15,6 +15,7 @@ const passwordResetRoutes = require("./controllers/modules/passwordReset/passwor
 const paymentsModule = require("./controllers/modules/payments");
 const adminRoutes = require("./controllers/modules/admins/");
 const plansModule = require("./controllers/modules/plans");
+const adminUsersModule = require("./controllers/modules/adminUsers");
 
 // Módulos privados
 const userPreferencesModule = require("./controllers/modules/userPreferences");
@@ -50,6 +51,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // login / register / verify / admin login
 app.use("/users", usersModule);
 app.use("/admins", adminRoutes);
+app.use("/admin-users", adminUsersModule); 
 app.use("/plans", plansModule);
 
 // reset password

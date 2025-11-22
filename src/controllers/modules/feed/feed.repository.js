@@ -1,30 +1,20 @@
 const { prisma } = require("../../../dataBase/prisma");
 
 module.exports = {
-
- getById(id) {
-  return prisma.user.findUnique({
-    where: { id },
-    include: {
-      profileBasic: true,
-      profileLocation: true,
-      profileLifestyle: true,
-      profileWork: true,
-      profileRelation: true,
-      profileInterests: true,
-      profileExtra: true,
-
-      preference: true,
-      photos: true,
-
-      credits: true,   // <--- BoostCredit[]
-      boosts: true,    // <--- BoostActivation[]
-
-      likesSent: true,
-      likesReceived: true,
-    }
-  });
-},
+  getById(id) {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,        // perfil unificado
+        preference: true,
+        photos: true,
+        credits: true,
+        boosts: true,
+        likesSent: true,
+        likesReceived: true,
+      },
+    });
+  },
 
   list({ skip, limit, where, loggedUserId }) {
     return prisma.user.findMany({
@@ -34,16 +24,11 @@ module.exports = {
         ...where,
         id: { not: loggedUserId },
       },
+      orderBy: { createdAt: "desc" },
       include: {
-        profileBasic: true,
-        profileLocation: true,
-        profileLifestyle: true,
-        profileWork: true,
-        profileRelation: true,
-        profileInterests: true,
-        profileExtra: true,
+        profile: true,
+        preference: true,
         photos: true,
-        preference: true
       },
     });
   },
