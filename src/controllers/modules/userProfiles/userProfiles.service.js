@@ -1,17 +1,22 @@
+// src/modules/userProfiles/userProfiles.service.js
+
 const repo = require("./userProfiles.repository");
-const {
-  extractBasic,
-  extractLocation,
-  extractLifestyle,
-  extractWork,
-  extractRelation,
-  extractInterests,
-  extractExtra,
-} = require("./userProfiles.extractors");
 const axios = require("axios");
 const { prisma } = require("../../../dataBase/prisma");
 const { translateProfileEnums } = require("../../../utils/enumTranslator");
 
+// quais campos o FREE pode mexer
+const FREE_FIELDS = [
+  "bio",
+  "birthday",
+  "gender",
+  "orientation",
+  "pronoun",
+  "city",
+  "state",
+  "country",
+  "languages",
+];
 
 async function geocodeLocation({ city, state, country }) {
   try {
@@ -39,83 +44,84 @@ async function geocodeLocation({ city, state, country }) {
   }
 }
 
-
-module.exports = {
-
-  
-  async getProfile(userId, locale) {
-    const sections = await repo.loadAll(userId);
-
-    // juntar tudo num único objeto
-    const merged = {
-      ...sections.basic,
-      ...sections.location,
-      ...sections.lifestyle,
-      ...sections.work,
-      ...sections.relation,
-      ...sections.interests,
-      ...sections.extra,
-    };
-
-    return translateProfileEnums(merged, locale);
-  },
-
- async updateProfile(userId, data, locale) {
-  const parts = {
-    basic: extractBasic(data),
-    location: extractLocation(data),
-    lifestyle: extractLifestyle(data),
-    work: extractWork(data),
-    relation: extractRelation(data),
-    interests: extractInterests(data),
-    extra: extractExtra(data),
-  };
-
-  // -----------------------------
-  // 🌍 GEOLOCALIZAÇÃO AUTOMÁTICA
-  // -----------------------------
-  const loc = parts.location;
-
-  if (loc.city || loc.state || loc.country) {
-    const coords = await geocodeLocation(loc);
-
-    if (coords) {
-      loc.latitude = coords.latitude;
-      loc.longitude = coords.longitude;
+// pega só campos FREE do body
+function filterFreeData(data) {
+  const result = {};
+  for (const key of FREE_FIELDS) {
+    if (data[key] !== undefined) {
+      result[key] = data[key];
     }
   }
-
-  await repo.upsertAll(userId, parts);
-
-  return await this.getProfile(userId, locale);
-},
-
-  async deleteProfile(userId) {
-    // Você pode decidir se vai deletar tudo ou apenas marcar vazio
-    return prisma.$transaction([
-      prisma.userProfileBasic.delete({ where: { userId } }).catch(() => {}),
-      prisma.userProfileLocation.delete({ where: { userId } }).catch(() => {}),
-      prisma.userProfileLifestyle.delete({ where: { userId } }).catch(() => {}),
-      prisma.userProfileWorkEducation.delete({ where: { userId } }).catch(() => {}),
-      prisma.userProfileRelationInfo.delete({ where: { userId } }).catch(() => {}),
-      prisma.userProfileInterests.delete({ where: { userId } }).catch(() => {}),
-      prisma.userProfileExtra.delete({ where: { userId } }).catch(() => {}),
-    ]);
-  },
-
- async getEnums(locale) {
-  console.log("📌 getEnums() recebeu locale:", locale);
-
-  const rows = await prisma.enumLabel.findMany({ where: { locale } });
-
-  return rows.reduce((acc, row) => {
-    if (!acc[row.enumType]) acc[row.enumType] = [];
-    acc[row.enumType].push({
-      value: row.enumValue,
-      label: row.label,
-    });
-    return acc;
-  }, {});
+  return result;
 }
 
+module.exports = {
+  // 🔹 GET /me
+  async getProfile(userId, locale) {
+    const profile = await repo.getProfile(userId);
+
+    if (!profile) return null;
+
+    // traduz enums (Gender, Orientation, etc.)
+    return translateProfileEnums(profile, locale);
+  },
+
+  // 🔹 UPDATE FREE
+  async updateProfileFree(userId, data, locale) {
+    // só campos que o free pode mexer
+    const filtered = filterFreeData(data);
+
+    // geocode se veio localização
+    if (filtered.city || filtered.state || filtered.country) {
+      const coords = await geocodeLocation(filtered);
+      if (coords) {
+        filtered.latitude = coords.latitude;
+        filtered.longitude = coords.longitude;
+      }
+    }
+
+    await repo.upsertProfile(userId, filtered);
+
+    return this.getProfile(userId, locale);
+  },
+
+  // 🔹 UPDATE PREMIUM
+  async updateProfilePremium(userId, data, locale) {
+    // aqui você aceita o objeto completo que o app mandar,
+    // desde que os campos existam no model UserProfile
+
+    const toSave = { ...data };
+
+    // geocode se veio localização
+    if (toSave.city || toSave.state || toSave.country) {
+      const coords = await geocodeLocation(toSave);
+      if (coords) {
+        toSave.latitude = coords.latitude;
+        toSave.longitude = coords.longitude;
+      }
+    }
+
+    await repo.upsertProfile(userId, toSave);
+
+    return this.getProfile(userId, locale);
+  },
+
+  async deleteProfile(userId) {
+    return repo.deleteProfile(userId);
+  },
+
+  async getEnums(locale) {
+    console.log("📌 getEnums() recebeu locale:", locale);
+
+    const rows = await prisma.enumLabel.findMany({ where: { locale } });
+
+    return rows.reduce((acc, row) => {
+      if (!acc[row.enumType]) acc[row.enumType] = [];
+      acc[row.enumType].push({
+        value: row.enumValue,
+        label: row.label,
+      });
+      return acc;
+    }, {});
+  },
 };

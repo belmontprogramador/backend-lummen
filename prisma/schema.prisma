@@ -382,53 +382,46 @@ model UserProfile {
   // 🔹 Básico
   bio        String?
   birthday   DateTime?
-  gender     Gender?
-  orientation SexualOrientation?
-  pronoun    Pronoun?
+  preferredGenders Gender[] @default([])
+  preferredOrientations SexualOrientation[] @default([])
+  preferredPronouns Pronoun[] @default([])
   heightCm   Int?
-  zodiac     ZodiacSign?
+  preferredIntentions        Intention[]        @default([])
+  preferredRelationshipTypes RelationshipType[] @default([])
+  preferredZodiacs ZodiacSign[] @default([])   
+  
 
   // 🔹 Localização
   latitude  Decimal? @db.Decimal(9, 6)
   longitude Decimal? @db.Decimal(9, 6)
-  city      String?
-  state     String?
-  country   String?
 
-  // 🔹 Relação / Intenção
-  intention         Intention?
-  intentionOther    String?
-  relationshipType  RelationshipType?
-  relationshipOther String?
+  
 
-  // 🔹 Lifestyle / Hábitos
-  pets          PetsPreference?
-  petsOther     String?
-  drinking      DrinkingStatus?
-  smoking       SmokingStatus?
-  activityLevel ActivityFrequency?
-
-  communication      CommunicationStyle?
-  communicationOther String?
+ // LIFESTYLE / HÁBITOS
+  preferredPets          PetsPreference[]     @default([])
+  preferredSmoking       SmokingStatus[]      @default([])
+  preferredDrinking      DrinkingStatus[]     @default([])
+  preferredActivityLevel ActivityFrequency[]   @default([])
+  preferredCommunication CommunicationStyle[] @default([])
+ 
 
   // 🔹 Trabalho / Educação
   jobTitle  String?
   company   String?
-  education String?
+  preferredEducationLevels EducationLevel[] @default([])
 
-  educationLevel EducationLevel?
-  educationOther String?
-  livingIn       String?
+    // LÍNGUAS
+  preferredLanguages Language[] @default([])   
+   
 
-  // 🔹 Interesses
-  languages              Language[]            @default([])
-  interestsActivities    InterestActivity[]    @default([])
-  interestsLifestyle     InterestLifestyle[]   @default([])
-  interestsCreativity    InterestCreativity[]  @default([])
-  interestsSportsFitness InterestSports[]      @default([])
-  interestsMusic         InterestMusic[]       @default([])
-  interestsNightlife     InterestNightlife[]   @default([])
-  interestsTvCinema      InterestTvCinema[]    @default([])
+    // INTERESSES
+  preferredInterestsActivities    InterestActivity[]    @default([])
+  preferredInterestsLifestyle     InterestLifestyle[]   @default([])
+  preferredInterestsCreativity    InterestCreativity[]  @default([])
+  preferredInterestsSportsFitness InterestSports[]      @default([])
+  preferredInterestsMusic         InterestMusic[]       @default([])
+  preferredInterestsNightlife     InterestNightlife[]   @default([])
+  preferredInterestsTvCinema      InterestTvCinema[]    @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -80,6 +80,28 @@ async function main() {
       path: "/user-preferences/public/:userId",
       method: "GET",
     },
+
+    // =====================================================
+    // USER PROFILE (NEW)
+    // =====================================================
+    {
+      name: "Atualizar Perfil (FREE)",
+      tag: "profile_update_free",
+      path: "/user-profiles/free",
+      method: "PUT",
+    },
+    {
+      name: "Atualizar Perfil (PREMIUM)",
+      tag: "profile_update_premium",
+      path: "/user-profiles/premium",
+      method: "PUT",
+    },
+    {
+      name: "Atualizar Perfil (SUPER PREMIUM)",
+      tag: "profile_update_super",
+      path: "/user-profiles/super",
+      method: "PUT",
+    },
   ];
 
   for (const route of routesData) {

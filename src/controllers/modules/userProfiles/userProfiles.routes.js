@@ -1,20 +1,39 @@
+// src/modules/userProfiles/userProfiles.routes.js
+
 const express = require("express");
 const router = express.Router();
 
 const controller = require("./userProfiles.controller");
-const { auth } = require("../../../middleware/auth");
+const { requireAuth } = require("../../../middleware/authUser");
 const { requireApiKey } = require("../../../middleware/apiAuth");
+const dynamicRoute = require("../../../middleware/dynamicRoute");
 
-// Perfil logado
-router.get("/me", requireApiKey, auth, controller.getMe);
+// 🔐 API KEY + Auth em todas
+router.use(requireApiKey);
+router.use(requireAuth);
 
-// Atualizar perfil completo
-router.put("/", requireApiKey, auth, controller.update);
 
-// Deletar todas as seções
-router.delete("/", requireApiKey, auth, controller.delete);
+// Perfil logado (GET unificado)
+router.get("/me", controller.getMe);
+
+// Atualizar perfil FREE (só campos básicos) → rota protegida
+router.put(
+  "/free",
+  dynamicRoute("profile_update_free"),
+  controller.updateFree
+);
+
+// Atualizar perfil PREMIUM (perfil completo) → rota protegida
+router.put(
+  "/premium",
+  dynamicRoute("profile_update_premium"),
+  controller.updatePremium
+);
+
+// Deletar perfil inteiro
+router.delete("/", controller.delete);
 
 // Trazer enums traduzidos
-router.get("/enums", requireApiKey, auth, controller.getEnums);
+router.get("/enums", controller.getEnums);
 
 module.exports = router;
