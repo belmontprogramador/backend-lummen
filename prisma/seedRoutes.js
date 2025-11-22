@@ -2,12 +2,12 @@ const { PrismaClient } = require('../generated/prisma');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Iniciando seed das rotas do sistema (FREE / PREMIUM)...");
+  console.log("🌱 Iniciando seed das rotas do sistema (FREE / PREMIUM / SUPER)...");
 
   const routesData = [
 
     // =====================================================
-    // FEED (FREE & PREMIUM)
+    // FEED (FREE, PREMIUM, SUPER PREMIUM)
     // =====================================================
     {
       name: "Feed - Listar usuários (FREE)",
@@ -22,6 +22,13 @@ async function main() {
       method: "GET",
     },
     {
+      name: "Feed - Listar usuários (SUPER PREMIUM)",
+      tag: "feed_list_super_premium",
+      path: "/feed/super",
+      method: "GET",
+    },
+
+    {
       name: "Feed - Ver perfil específico (FREE)",
       tag: "feed_view_free",
       path: "/feed/free/:id",
@@ -31,6 +38,12 @@ async function main() {
       name: "Feed - Ver perfil específico (PREMIUM)",
       tag: "feed_view_premium",
       path: "/feed/premium/:id",
+      method: "GET",
+    },
+    {
+      name: "Feed - Ver perfil específico (SUPER PREMIUM)",
+      tag: "feed_view_super_premium",
+      path: "/feed/super/:id",
       method: "GET",
     },
 
@@ -69,12 +82,7 @@ async function main() {
     },
   ];
 
-
-  // ==============================================
-  // EXECUTAR OU ATUALIZAR ROTAS
-  // ==============================================
   for (const route of routesData) {
-
     const existing = await prisma.route.findUnique({
       where: { tag: route.tag }
     });

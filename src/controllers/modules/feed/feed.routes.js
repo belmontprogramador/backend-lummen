@@ -32,6 +32,18 @@ router.get(
   controller.list
 );
 
+// ⭐ FEED SUPER PREMIUM
+router.get(
+  "/super",
+  dynamicRoute("feed_list_super_premium"),
+  (req, res, next) => {
+    req.user.routeTag = "feed_list_super_premium";
+    next();
+  },
+  controller.list
+);
+
+
 // ⭐ ITEM ESPECÍFICO FREE
 router.get(
   "/free/:id",
