@@ -2,6 +2,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const fs = require("fs");
+const { normalizeUserPayload } = require("../../../utils/normalizeUserPayload");
+
 
 const repository = require("./user.repository");
 
@@ -81,7 +83,8 @@ module.exports = {
       { expiresIn: "7d" }
     );
 
-    return { user: fullUser, token };
+    return { user: normalizeUserPayload(fullUser), token };
+
   },
 
   // =====================================================================
@@ -123,7 +126,8 @@ module.exports = {
       { expiresIn: "7d" }
     );
 
-    return { user: fullUser, token };
+    return { user: normalizeUserPayload(fullUser), token };
+
   },
 
   // =====================================================================

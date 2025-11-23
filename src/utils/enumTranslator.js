@@ -1,8 +1,6 @@
 const { prisma } = require("../dataBase/prisma");
 
-// -----------------------
 // Traduz apenas 1 enum
-// -----------------------
 async function translateEnum(enumType, value, locale) {
   if (!value) return null;
 
@@ -19,9 +17,7 @@ async function translateEnum(enumType, value, locale) {
   return entry ? entry.label : value;
 }
 
-// -----------------------
-// Traduz ARRAY de enums
-// -----------------------
+// Traduz array de enums
 async function translateEnumArray(enumType, arr, locale) {
   if (!arr || !Array.isArray(arr)) return [];
 
@@ -45,54 +41,38 @@ async function translateEnumArray(enumType, arr, locale) {
 }
 
 // -----------------------
-// Traduz objeto completo
+// Traduz UserProfile COMPLETO
 // -----------------------
 async function translateProfileEnums(profile, locale) {
   if (!profile) return null;
 
-  // ------- ENUMS SIMPLES -------
-  const enumMap = {
-    gender: "Gender",
-    orientation: "SexualOrientation",
-    pronoun: "Pronoun",
-    zodiac: "ZodiacSign",
-    intention: "Intention",
-    relationshipType: "RelationshipType",
-    educationLevel: "EducationLevel",
-    communication: "CommunicationStyle",
-    pets: "PetsPreference",
-    drinking: "DrinkingStatus",
-    smoking: "SmokingStatus",
-    activityLevel: "ActivityFrequency",
-  };
-
-  // ------- ENUMS EM ARRAY -------
-  const enumArrayMap = {
-    languages: "Language",                      // OK
-    interestsActivities: "InterestActivity",    // CORRIGIDO
-    interestsLifestyle: "InterestLifestyle",    // CORRIGIDO
-    interestsCreativity: "InterestCreativity",  // CORRIGIDO
-    interestsSportsFitness: "InterestSports",   // CORRIGIDO
-    interestsMusic: "InterestMusic",            // CORRIGIDO
-    interestsNightlife: "InterestNightlife",    // CORRIGIDO
-    interestsTvCinema: "InterestTvCinema",      // CORRIGIDO
-  };
-
   const result = { ...profile };
 
-  // Traduz enums simples
-  for (const field in enumMap) {
-    result[field] = await translateEnum(enumMap[field], profile[field], locale);
-  }
+  // ENUMS SIMPLES
+  result.gender = await translateEnum("Gender", profile.gender, locale);
+  result.orientation = await translateEnum("SexualOrientation", profile.orientation, locale);
+  result.pronoun = await translateEnum("Pronoun", profile.pronoun, locale);
 
-  // Traduz arrays de enums
-  for (const field in enumArrayMap) {
-    result[field] = await translateEnumArray(
-      enumArrayMap[field],
-      profile[field],
-      locale
-    );
-  }
+  // ARRAY — CORRIGIDO para UserProfile real
+  result.preferredLanguages = await translateEnumArray("Language", profile.preferredLanguages, locale);
+  result.preferredZodiacs = await translateEnumArray("ZodiacSign", profile.preferredZodiacs, locale);
+
+  result.preferredPets = await translateEnumArray("PetsPreference", profile.preferredPets, locale);
+  result.preferredSmoking = await translateEnumArray("SmokingStatus", profile.preferredSmoking, locale);
+  result.preferredDrinking = await translateEnumArray("DrinkingStatus", profile.preferredDrinking, locale);
+  result.preferredActivityLevel = await translateEnumArray("ActivityFrequency", profile.preferredActivityLevel, locale);
+  result.preferredCommunication = await translateEnumArray("CommunicationStyle", profile.preferredCommunication, locale);
+
+  result.preferredEducationLevels = await translateEnumArray("EducationLevel", profile.preferredEducationLevels, locale);
+
+  // INTERESSES — 100% CORRIGIDOS
+  result.preferredInterestsActivities = await translateEnumArray("InterestActivity", profile.preferredInterestsActivities, locale);
+  result.preferredInterestsLifestyle = await translateEnumArray("InterestLifestyle", profile.preferredInterestsLifestyle, locale);
+  result.preferredInterestsCreativity = await translateEnumArray("InterestCreativity", profile.preferredInterestsCreativity, locale);
+  result.preferredInterestsSportsFitness = await translateEnumArray("InterestSports", profile.preferredInterestsSportsFitness, locale);
+  result.preferredInterestsMusic = await translateEnumArray("InterestMusic", profile.preferredInterestsMusic, locale);
+  result.preferredInterestsNightlife = await translateEnumArray("InterestNightlife", profile.preferredInterestsNightlife, locale);
+  result.preferredInterestsTvCinema = await translateEnumArray("InterestTvCinema", profile.preferredInterestsTvCinema, locale);
 
   return result;
 }

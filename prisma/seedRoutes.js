@@ -103,7 +103,7 @@ async function main() {
     },
 
     // =====================================================
-    // LIKES (❤️ CURTIDAS)
+    // ❤️ LIKES
     // =====================================================
     {
       name: "Like — Criar ou Super Like",
@@ -128,6 +128,32 @@ async function main() {
       tag: "like_received",
       path: "/likes/received",
       method: "GET",
+    },
+
+    // =====================================================
+    // 💔 DISLIKE
+    // =====================================================
+    {
+      name: "Dislike — Criar",
+      tag: "dislike_create",
+      path: "/likes/dislike",
+      method: "POST",
+    },
+    {
+      name: "Dislike — Remover",
+      tag: "dislike_delete",
+      path: "/likes/dislike/:dislikedId",
+      method: "DELETE",
+    },
+
+    // =====================================================
+    // ⏭ SKIP
+    // =====================================================
+    {
+      name: "Skip — Criar",
+      tag: "skip_create",
+      path: "/likes/skip",
+      method: "POST",
     },
   ];
 

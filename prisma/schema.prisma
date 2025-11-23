@@ -288,6 +288,11 @@ model User {
   boosts        BoostActivation[]
   likesSent     Like[]            @relation("LikesSent")
   likesReceived Like[]            @relation("LikesReceived")
+  dislikesSent     Dislike[]        @relation("DislikesSent")
+  dislikesReceived Dislike[]        @relation("DislikesReceived")
+  skipsSent        Skip[]           @relation("SkipsSent")
+  skipsReceived    Skip[]           @relation("SkipsReceived")
+
 }
 
 model Plan {
@@ -470,6 +475,33 @@ model Like {
   @@index([likedId])
 }
 
+model Dislike {
+  id        String   @id @default(uuid()) @db.Uuid
+  dislikerId String  @db.Uuid
+  dislikedId String  @db.Uuid
+  createdAt DateTime @default(now())
+
+  disliker User @relation("DislikesSent", fields: [dislikerId], references: [id], onDelete: Cascade)
+  disliked User @relation("DislikesReceived", fields: [dislikedId], references: [id], onDelete: Cascade)
+
+  @@unique([dislikerId, dislikedId])
+  @@index([dislikerId])
+  @@index([dislikedId])
+}
+
+model Skip {
+  id        String   @id @default(uuid()) @db.Uuid
+  skipperId String   @db.Uuid
+  skippedId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  skipper User @relation("SkipsSent", fields: [skipperId], references: [id], onDelete: Cascade)
+  skipped User @relation("SkipsReceived", fields: [skippedId], references: [id], onDelete: Cascade)
+
+  @@unique([skipperId, skippedId])
+  @@index([skipperId])
+  @@index([skippedId])
+}
 
 model Product {
   id        String   @id @default(uuid()) @db.Uuid

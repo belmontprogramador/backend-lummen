@@ -1,6 +1,9 @@
 const { prisma } = require("../../../dataBase/prisma");
 
 module.exports = {
+  //
+  // ❤️ LIKE
+  //
   async upsertLike(likerId, likedId, isSuper = false) {
     return prisma.like.upsert({
       where: { likerId_likedId: { likerId, likedId } },
@@ -10,19 +13,21 @@ module.exports = {
   },
 
   async deleteLike(likerId, likedId) {
-    return prisma.like.delete({
-      where: { likerId_likedId: { likerId, likedId } },
-    }).catch(() => null);
+    return prisma.like
+      .delete({
+        where: { likerId_likedId: { likerId, likedId } },
+      })
+      .catch(() => null);
   },
 
-  async exists(likerId, likedId) {
+  async existsLike(likerId, likedId) {
     const like = await prisma.like.findUnique({
       where: { likerId_likedId: { likerId, likedId } },
     });
     return !!like;
   },
 
-  async getReceived(userId) {
+  async getReceivedLikes(userId) {
     return prisma.like.findMany({
       where: { likedId: userId },
       include: {
@@ -35,5 +40,49 @@ module.exports = {
       },
       orderBy: { createdAt: "desc" },
     });
+  },
+
+  //
+  // 💔 DISLIKE
+  //
+  async upsertDislike(dislikerId, dislikedId) {
+    return prisma.dislike.upsert({
+      where: { dislikerId_dislikedId: { dislikerId, dislikedId } },
+      create: { dislikerId, dislikedId },
+      update: {},
+    });
+  },
+
+  async deleteDislike(dislikerId, dislikedId) {
+    return prisma.dislike
+      .delete({
+        where: { dislikerId_dislikedId: { dislikerId, dislikedId } },
+      })
+      .catch(() => null);
+  },
+
+  async existsDislike(dislikerId, dislikedId) {
+    const dislike = await prisma.dislike.findUnique({
+      where: { dislikerId_dislikedId: { dislikerId, dislikedId } },
+    });
+    return !!dislike;
+  },
+
+  //
+  // ⏭ SKIP
+  //
+  async upsertSkip(skipperId, skippedId) {
+    return prisma.skip.upsert({
+      where: { skipperId_skippedId: { skipperId, skippedId } },
+      create: { skipperId, skippedId },
+      update: {},
+    });
+  },
+
+  async existsSkip(skipperId, skippedId) {
+    const skip = await prisma.skip.findUnique({
+      where: { skipperId_skippedId: { skipperId, skippedId } },
+    });
+    return !!skip;
   },
 };
