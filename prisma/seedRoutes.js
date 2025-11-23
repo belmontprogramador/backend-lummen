@@ -27,7 +27,6 @@ async function main() {
       path: "/feed/super",
       method: "GET",
     },
-
     {
       name: "Feed - Ver perfil específico (FREE)",
       tag: "feed_view_free",
@@ -82,7 +81,7 @@ async function main() {
     },
 
     // =====================================================
-    // USER PROFILE (NEW)
+    // USER PROFILE
     // =====================================================
     {
       name: "Atualizar Perfil (FREE)",
@@ -102,11 +101,39 @@ async function main() {
       path: "/user-profiles/super",
       method: "PUT",
     },
+
+    // =====================================================
+    // LIKES (❤️ CURTIDAS)
+    // =====================================================
+    {
+      name: "Like — Criar ou Super Like",
+      tag: "like_create",
+      path: "/likes",
+      method: "POST",
+    },
+    {
+      name: "Like — Deletar",
+      tag: "like_delete",
+      path: "/likes/:likedId",
+      method: "DELETE",
+    },
+    {
+      name: "Like — Verificar",
+      tag: "like_check",
+      path: "/likes/check/:likedId",
+      method: "GET",
+    },
+    {
+      name: "Like — Recebidos",
+      tag: "like_received",
+      path: "/likes/received",
+      method: "GET",
+    },
   ];
 
   for (const route of routesData) {
     const existing = await prisma.route.findUnique({
-      where: { tag: route.tag }
+      where: { tag: route.tag },
     });
 
     if (existing) {
@@ -125,7 +152,7 @@ async function main() {
 }
 
 main()
-  .catch(e => {
+  .catch((e) => {
     console.error(e);
     process.exit(1);
   })

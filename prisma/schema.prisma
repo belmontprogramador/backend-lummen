@@ -459,6 +459,7 @@ model Like {
   id        String   @id @default(uuid()) @db.Uuid
   likerId   String   @db.Uuid
   likedId   String   @db.Uuid
+  isSuper   Boolean  @default(false)  
   createdAt DateTime @default(now())
 
   liker User @relation("LikesSent", fields: [likerId], references: [id], onDelete: Cascade)
@@ -468,6 +469,7 @@ model Like {
   @@index([likerId])
   @@index([likedId])
 }
+
 
 model Product {
   id        String   @id @default(uuid()) @db.Uuid

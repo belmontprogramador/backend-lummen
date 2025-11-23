@@ -20,6 +20,7 @@ const adminUsersModule = require("./controllers/modules/adminUsers");
 // Módulos privados
 const userPreferencesModule = require("./controllers/modules/userPreferences");
 const feedModule = require("./controllers/modules/feed");
+const likesModule = require("./controllers/modules/likes");
 const userPhotosModule = require("./controllers/modules/usersPhotos");
 const userProfilesModule = require("./controllers/modules/userProfiles");
 const matchRoutes = require("./routes/users/match.routes");
@@ -79,6 +80,7 @@ app.use("/user-photos", userPhotosModule);
 app.use("/user-profiles", userProfilesModule);
 app.use("/user-preferences", userPreferencesModule);
 app.use("/feed", feedModule);
+app.use("/likes", likesModule); // 👈 adiciona o módulo aqui
 app.use("/matches", matchRoutes);
 
 /* ================================================
