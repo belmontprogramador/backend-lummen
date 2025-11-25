@@ -42,6 +42,22 @@ module.exports = {
     });
   },
 
+  // ⭐️ NOVO – BUSCAR LIKES QUE O USUÁRIO ENVIOU
+  async getSentLikes(userId) {
+    return prisma.like.findMany({
+      where: { likerId: userId },
+      include: {
+        liked: {
+          include: {
+            profile: true,
+            photos: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
   //
   // 💔 DISLIKE
   //
@@ -52,6 +68,36 @@ module.exports = {
       update: {},
     });
   },
+
+  async getSentLikes(userId) {
+  return prisma.like.findMany({
+    where: { likerId: userId },
+    include: {
+      liked: {
+        include: {
+          profile: true,
+          photos: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+},
+
+async getReceivedLikes(userId) {
+  return prisma.like.findMany({
+    where: { likedId: userId },
+    include: {
+      liker: {
+        include: {
+          profile: true,
+          photos: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+},
 
   async deleteDislike(dislikerId, dislikedId) {
     return prisma.dislike

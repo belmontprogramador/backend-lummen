@@ -11,7 +11,6 @@ const dynamicRoute = require("../../../middleware/dynamicRoute");
 router.use(requireApiKey);
 router.use(requireAuth);
 
-
 //
 // ❤️ LIKE
 //
@@ -33,10 +32,24 @@ router.get(
   controller.check
 );
 
+// ⭐️ ROTAS → LISTAR LIKES ENVIADOS
+router.get(
+  "/sent",
+  dynamicRoute("like_sent"),
+  controller.sent
+);
+
+// ⭐️ ROTAS → LISTAR LIKES RECEBIDOS
 router.get(
   "/received",
   dynamicRoute("like_received"),
   controller.received
+);
+
+router.get(
+  "/all",
+  dynamicRoute("like_all"),
+  controller.all
 );
 
 
@@ -54,7 +67,6 @@ router.delete(
   dynamicRoute("dislike_delete"),
   controller.removeDislike
 );
-
 
 //
 // ⏭ SKIP

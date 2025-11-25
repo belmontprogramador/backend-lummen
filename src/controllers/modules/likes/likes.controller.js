@@ -54,6 +54,18 @@ module.exports = {
     }
   },
 
+  // ⭐️ LIKES ENVIADOS
+  async sent(req, res) {
+    try {
+      const userId = req.user.id;
+      const list = await service.sentLikes(userId);
+      res.json(list);
+    } catch (err) {
+      console.error("❌ Erro ao buscar likes enviados:", err);
+      res.status(400).json({ error: err.message });
+    }
+  },
+
   //
   // 💔 DISLIKE
   //
@@ -70,6 +82,24 @@ module.exports = {
     }
   },
 
+  async all(req, res) {
+  try {
+    const userId = req.user.id;
+
+    const sent = await service.sentLikes(userId);
+    const received = await service.receivedLikes(userId);
+
+    return res.json({
+      sent,
+      received,
+    });
+
+  } catch (err) {
+    console.error("❌ Erro ao buscar likes (all):", err);
+    return res.status(400).json({ error: err.message });
+  }
+},
+
   async removeDislike(req, res) {
     try {
       const dislikerId = req.user.id;
@@ -84,7 +114,7 @@ module.exports = {
   },
 
   //
-  // 🔁 SKIP
+  // ⏭ SKIP
   //
   async createSkip(req, res) {
     try {

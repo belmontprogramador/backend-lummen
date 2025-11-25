@@ -105,31 +105,41 @@ async function main() {
     // =====================================================
     // ❤️ LIKES
     // =====================================================
-    {
-      name: "Like — Criar ou Super Like",
-      tag: "like_create",
-      path: "/likes",
-      method: "POST",
-    },
-    {
-      name: "Like — Deletar",
-      tag: "like_delete",
-      path: "/likes/:likedId",
-      method: "DELETE",
-    },
-    {
-      name: "Like — Verificar",
-      tag: "like_check",
-      path: "/likes/check/:likedId",
-      method: "GET",
-    },
-    {
-      name: "Like — Recebidos",
-      tag: "like_received",
-      path: "/likes/received",
-      method: "GET",
-    },
+   // =====================================================
+// ❤️ LIKES
+// =====================================================
+{
+  name: "Like — Criar ou Super Like",
+  tag: "like_create",
+  path: "/likes",
+  method: "POST",
+},
+{
+  name: "Like — Deletar",
+  tag: "like_delete",
+  path: "/likes/:likedId",
+  method: "DELETE",
+},
+{
+  name: "Like — Verificar",
+  tag: "like_check",
+  path: "/likes/check/:likedId",
+  method: "GET",
+},
+{
+  name: "Like — Recebidos",
+  tag: "like_received",
+  path: "/likes/received",
+  method: "GET",
+},
+{
+  name: "Like — Enviados",
+  tag: "like_sent",
+  path: "/likes/sent",
+  method: "GET",
+},
 
+    
     // =====================================================
     // 💔 DISLIKE
     // =====================================================
