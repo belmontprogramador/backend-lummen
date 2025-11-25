@@ -125,10 +125,71 @@ async getReceivedLikes(userId) {
     });
   },
 
+async listMatches(userId) {
+  const likes = await prisma.like.findMany({
+    where: {
+      OR: [
+        { likerId: userId },
+        { likedId: userId }
+      ]
+    },
+    include: {
+      liker: {
+        include: {
+          profile: true,
+          photos: true,
+        },
+      },
+      liked: {
+        include: {
+          profile: true,
+          photos: true,
+        },
+      },
+    },
+  });
+
+  // --- ENCONTRAR MATCHES (like mútuo)
+  const matches = [];
+  const processed = new Set();
+
+  for (const like of likes) {
+    // pares invertidos
+    const pairKey = `${like.likerId}-${like.likedId}`;
+    const reverseKey = `${like.likedId}-${like.likerId}`;
+
+    // evita duplicar
+    if (processed.has(pairKey) || processed.has(reverseKey)) continue;
+
+    const reverse = likes.find(
+      (l) => l.likerId === like.likedId && l.likedId === like.likerId
+    );
+
+    if (reverse) {
+      processed.add(pairKey);
+      processed.add(reverseKey);
+
+      const otherUser = like.likerId === userId ? like.liked : like.liker;
+
+      matches.push({
+        id: otherUser.id,
+        name: otherUser.name,
+        profile: otherUser.profile,
+        photos: otherUser.photos,
+        photo: otherUser.photo || otherUser.photos?.[0]?.src || null
+
+      });
+    }
+  }
+
+  return matches;
+},
+
   async existsSkip(skipperId, skippedId) {
     const skip = await prisma.skip.findUnique({
       where: { skipperId_skippedId: { skipperId, skippedId } },
     });
     return !!skip;
   },
+  
 };

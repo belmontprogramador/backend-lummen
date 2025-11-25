@@ -82,6 +82,11 @@ async receivedLikes(userId) {
   return repo.getReceivedLikes(userId);
 },
 
+async listMatches(userId) {
+    return repo.listMatches(userId);
+  },
+
+
 
   async removeDislike(dislikerId, dislikedId) {
     return prisma.dislike.delete({

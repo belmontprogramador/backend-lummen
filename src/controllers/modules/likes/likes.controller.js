@@ -82,6 +82,18 @@ module.exports = {
     }
   },
 
+async matches(req, res) {
+  try {
+    const userId = req.user.id;
+    const result = await service.listMatches(userId); // <- AQUI ESTAVA ERRADO
+    res.json(result);
+  } catch (err) {
+    console.error("❌ Erro ao buscar matches:", err);
+    res.status(400).json({ error: err.message });
+  }
+},
+
+
   async all(req, res) {
   try {
     const userId = req.user.id;

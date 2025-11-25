@@ -292,6 +292,12 @@ model User {
   dislikesReceived Dislike[]        @relation("DislikesReceived")
   skipsSent        Skip[]           @relation("SkipsSent")
   skipsReceived    Skip[]           @relation("SkipsReceived")
+    messagesSent     Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
+    conversations1 Conversation[] @relation("User1Chats")
+  conversations2 Conversation[] @relation("User2Chats")
+
+
 
 }
 
@@ -573,3 +579,35 @@ model EnumLabel {
   @@unique([enumType, enumValue, locale])
   @@index([enumType, locale])
 }
+
+model Message {
+  id              String   @id @default(uuid()) @db.Uuid
+  conversationId  String   @db.Uuid
+  conversation    Conversation @relation(fields: [conversationId], references: [id])
+
+  fromId    String   @db.Uuid
+  toId      String   @db.Uuid
+  from      User     @relation("MessagesSent", fields: [fromId], references: [id])
+  to        User     @relation("MessagesReceived", fields: [toId], references: [id])
+
+  text      String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+}
+
+model Conversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  user1Id   String   @db.Uuid
+  user2Id   String   @db.Uuid
+
+  user1     User     @relation("User1Chats", fields: [user1Id], references: [id])
+  user2     User     @relation("User2Chats", fields: [user2Id], references: [id])
+
+  messages  Message[]
+  
+  createdAt DateTime @default(now())
+
+  @@unique([user1Id, user2Id])
+}
+
+

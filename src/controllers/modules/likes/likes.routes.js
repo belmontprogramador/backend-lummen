@@ -20,26 +20,21 @@ router.post(
   controller.create
 );
 
-router.delete(
-  "/:likedId",
-  dynamicRoute("like_delete"),
-  controller.remove
-);
-
+// -------------------------
+// 🔥 ROTAS FIXAS PRIMEIRO!
+// -------------------------
 router.get(
-  "/check/:likedId",
-  dynamicRoute("like_check"),
-  controller.check
+  "/matches",
+  dynamicRoute("like_matches"),
+  controller.matches
 );
 
-// ⭐️ ROTAS → LISTAR LIKES ENVIADOS
 router.get(
   "/sent",
   dynamicRoute("like_sent"),
   controller.sent
 );
 
-// ⭐️ ROTAS → LISTAR LIKES RECEBIDOS
 router.get(
   "/received",
   dynamicRoute("like_received"),
@@ -52,6 +47,20 @@ router.get(
   controller.all
 );
 
+// -------------------------
+// ⚠️ ROTAS COM PARÂMETROS (DEPOIS!)
+// -------------------------
+router.get(
+  "/check/:likedId",
+  dynamicRoute("like_check"),
+  controller.check
+);
+
+router.delete(
+  "/:likedId",
+  dynamicRoute("like_delete"),
+  controller.remove
+);
 
 //
 // 💔 DISLIKE

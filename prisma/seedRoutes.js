@@ -165,6 +165,28 @@ async function main() {
       path: "/likes/skip",
       method: "POST",
     },
+    {
+  name: "Like — Matches (lista de matches)",
+  tag: "like_matches",
+  path: "/likes/matches",
+  method: "GET",
+},
+// =====================================================
+// 📩 MESSAGES (CHAT)
+// =====================================================
+{
+  name: "Messages — Listar histórico do chat",
+  tag: "messages_list",
+  path: "/messages/:userId",
+  method: "GET",
+},
+{
+  name: "Messages — Enviar mensagem",
+  tag: "messages_send",
+  path: "/messages",
+  method: "POST",
+},
+
   ];
 
   for (const route of routesData) {

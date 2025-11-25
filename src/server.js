@@ -1,15 +1,35 @@
+const http = require("http");
 const app = require("./app");
-const cron = require('node-cron');
-const checkExpiredPayments = require('./jobs/checkExpiredPayments');
+const cron = require("node-cron");
+const checkExpiredPayments = require("./jobs/checkExpiredPayments");
+
+const { Server } = require("socket.io");
+
+// Cria servidor HTTP
+const server = http.createServer(app);
+
+// WebSocket (Socket.IO)
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Authorization", "x-api-key"],
+    credentials: true
+  }
+});
+
+
+// Inicializa módulo de mensagens
+require("./websocket/messages.socket")(io);
 
 const PORT = process.env.PORT || 3002;
 
-// Rodar 1x por dia às 03:00 da manhã
-cron.schedule('0 3 * * *', async () => {
-  console.log('⏰ Iniciando verificação de pagamentos expirados...');
+// Cron diário 03:00
+cron.schedule("0 3 * * *", async () => {
+  console.log("⏰ Iniciando verificação de pagamentos expirados...");
   await checkExpiredPayments();
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
 });

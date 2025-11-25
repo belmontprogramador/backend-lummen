@@ -24,6 +24,8 @@ const likesModule = require("./controllers/modules/likes");
 const userPhotosModule = require("./controllers/modules/usersPhotos");
 const userProfilesModule = require("./controllers/modules/userProfiles");
 const matchRoutes = require("./routes/users/match.routes");
+const messagesModule = require("./controllers/modules/messages");
+
 
 dotenv.config({ quiet: true });
 
@@ -82,6 +84,8 @@ app.use("/user-preferences", userPreferencesModule);
 app.use("/feed", feedModule);
 app.use("/likes", likesModule); // 👈 adiciona o módulo aqui
 app.use("/matches", matchRoutes);
+app.use("/messages", messagesModule);
+
 
 /* ================================================
    🔥 TESTE
