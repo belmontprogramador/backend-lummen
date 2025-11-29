@@ -186,6 +186,22 @@ async function main() {
   path: "/messages",
   method: "POST",
 },
+// =====================================================
+// 📰 BLOG FEED (APP)
+// =====================================================
+{
+  name: "Blog Feed — Listar Posts (APP)",
+  tag: "BLOG_FEED",
+  path: "/blog-feed",
+  method: "GET",
+},
+{
+  name: "Blog Feed — Ver Post por ID (APP)",
+  tag: "BLOG_FEED_VIEW",
+  path: "/blog-feed/:id",
+  method: "GET",
+},
+
 
   ];
 

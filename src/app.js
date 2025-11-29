@@ -25,9 +25,12 @@ const feedModule = require("./controllers/modules/feed");
 const likesModule = require("./controllers/modules/likes");
 const userPhotosModule = require("./controllers/modules/usersPhotos");
 const userProfilesModule = require("./controllers/modules/userProfiles");
-const matchRoutes = require("./routes/users/match.routes");
+// const matchRoutes = require("./routes/users/match.routes");
 const messagesModule = require("./controllers/modules/messages");
 const blogRoutes = require("./controllers/modules/blogPosts");
+const blogFeedModule = require("./controllers/modules/blogFeed");
+
+
 
 
 
@@ -83,8 +86,10 @@ app.use("/user-profiles", userProfilesModule);
 app.use("/user-preferences", userPreferencesModule);
 app.use("/feed", feedModule);
 app.use("/likes", likesModule); // 👈 adiciona o módulo aqui
-app.use("/matches", matchRoutes);
+// app.use("/matches", matchRoutes);
 app.use("/messages", messagesModule);
+app.use("/blog-feed", blogFeedModule);
+
 
 
 
