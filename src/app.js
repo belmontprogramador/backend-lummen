@@ -16,6 +16,8 @@ const paymentsModule = require("./controllers/modules/payments");
 const adminRoutes = require("./controllers/modules/admins/");
 const plansModule = require("./controllers/modules/plans");
 const adminUsersModule = require("./controllers/modules/adminUsers");
+const blogAuthModule = require("./controllers/modules/blogAuth");
+const blogCategoriesModule = require("./controllers/modules/blogCategories");
 
 // Módulos privados
 const userPreferencesModule = require("./controllers/modules/userPreferences");
@@ -25,15 +27,17 @@ const userPhotosModule = require("./controllers/modules/usersPhotos");
 const userProfilesModule = require("./controllers/modules/userProfiles");
 const matchRoutes = require("./routes/users/match.routes");
 const messagesModule = require("./controllers/modules/messages");
+const blogRoutes = require("./controllers/modules/blogPosts");
+
 
 
 dotenv.config({ quiet: true });
 
 const app = express();
 
-/* ================================================
-   🧩 GLOBAL MIDDLEWARES
-================================================ */
+ 
+   //🧩 GLOBAL MIDDLEWARES
+ 
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -48,36 +52,32 @@ app.use(
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-/* ================================================
-   🔓 ROTAS PÚBLICAS
-================================================ */
+ 
+   //🔓 ROTAS PÚBLICAS
+ 
 // login / register / verify / admin login
 app.use("/users", usersModule);
 app.use("/admins", adminRoutes);
 app.use("/admin-users", adminUsersModule); 
 app.use("/plans", plansModule);
+app.use("/blog-auth", blogAuthModule);
+app.use("/blog-categories", blogCategoriesModule);
+app.use("/blog-post", blogRoutes )
 
 // reset password
 app.use("/password", passwordResetRoutes);
 
 // webhook / pagamentos externos
 app.use("/payments", paymentsModule);
-
-/* ================================================
-   🔐 PROTEÇÃO GLOBAL — APÓS requireAuth
-================================================ */
+ 
+//PROTEÇÃO GLOBAL — APÓS requireAuth
+ 
 app.use(requireAuth);
 // 🔥 Expiração automática + migração para FREE
 app.use(checkSubscription);
 
-/* ================================================
-   🔒 ROTAS PRIVADAS
-================================================ */
-// agora tudo está protegido por:
-// - requireAuth
-// - checkSubscription
-// - dynamicRoute (somente onde usar)
 
+//rotas privadas
 app.use("/user-photos", userPhotosModule);
 app.use("/user-profiles", userProfilesModule);
 app.use("/user-preferences", userPreferencesModule);
@@ -85,6 +85,9 @@ app.use("/feed", feedModule);
 app.use("/likes", likesModule); // 👈 adiciona o módulo aqui
 app.use("/matches", matchRoutes);
 app.use("/messages", messagesModule);
+
+
+
 
 
 /* ================================================

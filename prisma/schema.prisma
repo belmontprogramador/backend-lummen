@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   SUPER
   ADMIN
+  AUTHOR 
 }
 
 model Admin {
@@ -296,9 +297,6 @@ model User {
   messagesReceived Message[] @relation("MessagesReceived")
     conversations1 Conversation[] @relation("User1Chats")
   conversations2 Conversation[] @relation("User2Chats")
-
-
-
 }
 
 model Plan {
@@ -609,5 +607,63 @@ model Conversation {
 
   @@unique([user1Id, user2Id])
 }
+
+model BlogCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  posts     BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id           String   @id @default(uuid()) @db.Uuid
+
+  title        String
+  subtitle     String?
+  slug         String   @unique  
+  content      String
+
+  authorId     String   @db.Uuid
+  author       BlogAuthor @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  coverImage   String?
+  bannerImage  String?
+  publishedAt  DateTime  @default(now())
+
+  categoryId   String?  @db.Uuid
+  category     BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime @default(now())
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@map("blog_posts")
+}
+
+model BlogAuthor {
+  id        String   @id @default(uuid()) @db.Uuid
+
+  name      String
+  email     String   @unique
+  password  String
+
+  photo     String?   // ✅ FOTO DO AUTOR
+
+  active    Boolean  @default(true)
+  role      Role     @default(AUTHOR)
+
+  posts     BlogPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("blog_authors")
+}
+
+
 
 
