@@ -1,5 +1,8 @@
 const repository = require("./feed.repository");
-const { translateProfileEnums } = require("../../../utils/enumTranslator");
+const {
+  translateProfileEnums,
+  translatePreferenceEnums,
+} = require("../../../utils/enumTranslator");
 
 //
 // 🔥 Filtra o perfil dependendo se a rota é FREE ou PREMIUM
@@ -10,16 +13,19 @@ function filterProfileByPlan(profile, isPremiumRoute) {
     return profile;
   }
 
-  // FREE vê só o básico (ajusta essa lista como quiser)
+  // ✅ FREE vê só o básico (COM CAMPOS TRADUZIDOS CORRETOS)
   const allowedKeys = [
     "bio",
+    "birthday",
     "gender",
     "orientation",
     "pronoun",
     "city",
     "state",
     "country",
-    "languages", // se quiser esconder, tira daqui
+    "languages",
+    "intention",          // ✅ CORREÇÃO
+    "relationshipType",  // ✅ CORREÇÃO
   ];
 
   const filtered = {};
@@ -33,7 +39,9 @@ function filterProfileByPlan(profile, isPremiumRoute) {
 }
 
 module.exports = {
-  // LISTA FEED
+  // =========================
+  // ✅ LISTA DO FEED
+  // =========================
   async list(query, loggedUser, locale = "en") {
     const page = Math.max(parseInt(query.page || "1", 10), 1);
     const limit = Math.max(parseInt(query.limit || "20", 10), 1);
@@ -51,27 +59,34 @@ module.exports = {
       }),
     ]);
 
-    // saber se rota é premium ou free
     const routeTag = loggedUser.routeTag || "";
-    const isPremiumRoute = routeTag === "feed_list_premium";
+    const isPremiumRoute =
+      routeTag === "feed_list_premium" ||
+      routeTag === "feed_list_super_premium";
 
     const items = await Promise.all(
       raw.map(async (u) => {
-        // traduz enums do perfil unificado
+        // ✅ TRADUZ PERFIL
         const translatedProfile = await translateProfileEnums(
           u.profile || {},
           locale
         );
 
-        // aplica filtro por plano/rota
         const filteredProfile = filterProfileByPlan(
           translatedProfile,
           isPremiumRoute
         );
 
+        // ✅ TRADUZ PREFERÊNCIAS
+        const translatedPreference = await translatePreferenceEnums(
+          u.preference || {},
+          locale
+        );
+
         return {
           ...u,
           profile: filteredProfile,
+          preference: translatedPreference,
         };
       })
     );
@@ -85,27 +100,39 @@ module.exports = {
     };
   },
 
-  // GET ONE
+  // =========================
+  // ✅ ITEM ÚNICO DO FEED
+  // =========================
   async getOne(id, loggedUser, locale = "en") {
     const u = await repository.getById(id);
     if (!u) throw new Error("Usuário não encontrado");
 
+    // ✅ PERFIL TRADUZIDO
     const translatedProfile = await translateProfileEnums(
       u.profile || {},
       locale
     );
 
     const routeTag = loggedUser.routeTag || "";
-    const isPremiumRoute = routeTag === "feed_view_premium";
+    const isPremiumRoute =
+      routeTag === "feed_view_premium" ||
+      routeTag === "feed_view_super_premium";
 
     const filteredProfile = filterProfileByPlan(
       translatedProfile,
       isPremiumRoute
     );
 
+    // ✅ PREFERÊNCIAS TRADUZIDAS
+    const translatedPreference = await translatePreferenceEnums(
+      u.preference || {},
+      locale
+    );
+
     return {
       ...u,
       profile: filteredProfile,
+      preference: translatedPreference,
     };
   },
 };

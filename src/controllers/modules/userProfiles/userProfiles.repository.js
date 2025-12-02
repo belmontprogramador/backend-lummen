@@ -1,13 +1,27 @@
-// src/modules/userProfiles/userProfiles.repository.js
-
 const { prisma } = require("../../../dataBase/prisma");
 
 module.exports = {
   async upsertProfile(userId, data) {
+    // REMOVE CAMPOS QUE NÃO EXISTEM NO MODEL
+    const {
+      age,        // ❌ campo virtual
+      createdAt, // ❌ gerenciado pelo Prisma
+      updatedAt, // ❌ gerenciado pelo Prisma
+      user,      // ❌ relation
+      ...safeData
+    } = data;
+
     return prisma.userProfile.upsert({
       where: { userId },
-      create: { userId, ...data },
-      update: data,
+
+      create: {
+        userId,
+        ...safeData,
+      },
+
+      update: {
+        ...safeData,
+      },
     });
   },
 
@@ -18,7 +32,6 @@ module.exports = {
   },
 
   async deleteProfile(userId) {
-    // se não existir, ignora erro
     return prisma.userProfile.delete({ where: { userId } }).catch(() => {});
   },
 };

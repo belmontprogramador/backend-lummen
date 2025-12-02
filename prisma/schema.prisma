@@ -264,7 +264,7 @@ model User {
   email     String     @unique
   name      String?
   password  String
-  photo     String
+  photo     String?
 
   isPaid      Boolean    @default(false)
   paidUntil   DateTime?
@@ -388,49 +388,49 @@ model UserProfile {
   userId String @id @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 🔹 Básico
+  // 🔹 Básico do usuário (1 escolha, mas pode ser múltipla em enums)
   bio        String?
-  birthday   DateTime?
-  preferredGenders Gender[] @default([])
-  preferredOrientations SexualOrientation[] @default([])
-  preferredPronouns Pronoun[] @default([])
+  birthday   DateTime?   // 👉 Idade será CALCULADA, não salva
   heightCm   Int?
-  preferredIntentions        Intention[]        @default([])
-  preferredRelationshipTypes RelationshipType[] @default([])
-  preferredZodiacs ZodiacSign[] @default([])   
-  
 
-  // 🔹 Localização
-  latitude  Decimal? @db.Decimal(9, 6)
-  longitude Decimal? @db.Decimal(9, 6)
+  gender     Gender[] @default([])
+  orientation SexualOrientation[] @default([])
+  pronoun     Pronoun[] @default([])
 
-  
+  intention           Intention[]        @default([])
+  relationshipType    RelationshipType[] @default([])
+  zodiac              ZodiacSign[]       @default([])
 
- // LIFESTYLE / HÁBITOS
-  preferredPets          PetsPreference[]     @default([])
-  preferredSmoking       SmokingStatus[]      @default([])
-  preferredDrinking      DrinkingStatus[]     @default([])
-  preferredActivityLevel ActivityFrequency[]   @default([])
-  preferredCommunication CommunicationStyle[] @default([])
- 
+  // 🔹 Localização REAL
+  city       String?
+  state      String?
+  country    String?
+  latitude   Decimal? @db.Decimal(9, 6)
+  longitude  Decimal? @db.Decimal(9, 6)
 
-  // 🔹 Trabalho / Educação
+  // 🔹 Lifestyle do PRÓPRIO usuário
+  pets          PetsPreference[]      @default([])
+  smoking       SmokingStatus[]       @default([])
+  drinking      DrinkingStatus[]      @default([])
+  activityLevel ActivityFrequency[]  @default([])
+  communication CommunicationStyle[] @default([])
+  educationLevel EducationLevel[]    @default([])
+
+  // 🔹 Trabalho
   jobTitle  String?
   company   String?
-  preferredEducationLevels EducationLevel[] @default([])
 
-    // LÍNGUAS
-  preferredLanguages Language[] @default([])   
-   
+  // 🔹 Idiomas
+  languages Language[] @default([])
 
-    // INTERESSES
-  preferredInterestsActivities    InterestActivity[]    @default([])
-  preferredInterestsLifestyle     InterestLifestyle[]   @default([])
-  preferredInterestsCreativity    InterestCreativity[]  @default([])
-  preferredInterestsSportsFitness InterestSports[]      @default([])
-  preferredInterestsMusic         InterestMusic[]       @default([])
-  preferredInterestsNightlife     InterestNightlife[]   @default([])
-  preferredInterestsTvCinema      InterestTvCinema[]    @default([])
+  // 🔹 Interesses reais do usuário
+  interestsActivities    InterestActivity[]    @default([])
+  interestsLifestyle     InterestLifestyle[]   @default([])
+  interestsCreativity    InterestCreativity[]  @default([])
+  interestsSportsFitness InterestSports[]      @default([])
+  interestsMusic         InterestMusic[]       @default([])
+  interestsNightlife     InterestNightlife[]   @default([])
+  interestsTvCinema      InterestTvCinema[]    @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
