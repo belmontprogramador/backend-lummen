@@ -4,6 +4,11 @@ const cron = require("node-cron");
 require("./utils/redis");
 require("./queueWorkers");
 require("./queueWorkers/compatibility.worker");
+require("./queueWorkers/like.worker");
+require("./queueWorkers/dislike.worker");
+require("./queueWorkers/skip.worker");
+require("./queueWorkers/match.worker");
+
 
  
 

@@ -1,6 +1,7 @@
 // src/modules/feed/feed.service.js
 
 const { prisma } = require("../../../dataBase/prisma");
+const redis = require("../../../utils/redisClient");
 
 // PRE-CÁLCULO AUTOMÁTICO
 const { precalculateCompatibility } = require("../../../jobs/precalculateCompatibility");
@@ -32,55 +33,43 @@ function filterProfileByPlan(profile, isPremiumRoute) {
 }
 
 module.exports = {
-  // ======================================================
-  // ⚡ LISTA ULTRA RÁPIDA DO FEED (sem traduções)
-  // ======================================================
-  async list(query, loggedUser) {
+ async list(query, loggedUser) {
+  try {
     const page = Math.max(parseInt(query.page || "1"), 1);
     const limit = Math.max(parseInt(query.limit || "20"), 1);
     const skip = (page - 1) * limit;
 
-    const isPremiumRoute =
-      loggedUser.routeTag === "feed_list_premium" ||
-      loggedUser.routeTag === "feed_list_super_premium";
-
-    // ----------------------------
-    // 1) PRÉ-CÁLCULO AUTOMÁTICO
-    // ----------------------------
-    const hasScores = await prisma.compatibilityScore.findFirst({
-      where: { userA: loggedUser.id },
-    });
-
-    if (!hasScores && !precalcState.isRunning(loggedUser.id)) {
-      console.log("⚡ INICIANDO PRÉ-CÁLCULO AUTOMÁTICO →", loggedUser.id);
-
-      precalcState.start(loggedUser.id);
-
-      precalculateCompatibility(loggedUser.id)
-        .then(() => {
-          console.log("✅ PRÉ-CÁLCULO FINALIZADO PARA:", loggedUser.id);
-          precalcState.stop(loggedUser.id);
-        })
-        .catch((err) => {
-          console.log("❌ ERRO NO PRÉ-CÁLCULO:", err);
-          precalcState.stop(loggedUser.id);
-        });
-    }
-
-    // ----------------------------
-    // 2) BUSCA APENAS OS IDs ORDENADOS
-    // ----------------------------
-    const scores = await prisma.compatibilityScore.findMany({
-      where: {
-        userA: loggedUser.id,
-        score: { gte: 30 },
-      },
-      orderBy: { score: "desc" },
-      take: limit,
+    console.log("🔥 FEED → INIT", {
+      userId: loggedUser.id,
+      page,
+      limit,
       skip,
     });
 
-    if (scores.length === 0) {
+    const redisKey = `compat:${loggedUser.id}`;
+
+    console.log("🔥 FEED - checando redisKey:", redisKey);
+
+    const totalRedis = await redis.zCard(redisKey);
+    console.log("🔥 FEED - totalRedis =", totalRedis);
+
+    // BUSCA IDs no Redis
+    console.log("🔥 FEED - buscando ZRANGE...");
+
+    let raw;
+    try {
+      raw = await redis.zRange(redisKey, skip, skip + limit - 1, {
+        REV: true,
+        WITHSCORES: true
+      });
+    } catch (zrErr) {
+      console.error("❌ ERRO NO ZRANGE:", zrErr);
+      throw zrErr; // deixa cair no catch externo
+    }
+
+    console.log("🔥 FEED - RAW DO REDIS =", raw);
+
+    if (!raw || raw.length === 0) {
       return {
         page,
         limit,
@@ -90,11 +79,17 @@ module.exports = {
       };
     }
 
-    const ids = scores.map((s) => s.userB);
+    // PROCESSAR IDS E SCORES
+    const ids = [];
+    const scoresMap = {};
 
-    // ----------------------------
-    // 3) CARREGA OS USUÁRIOS
-    // ----------------------------
+    for (let i = 0; i < raw.length; i += 2) {
+      const userId = raw[i];
+      const score = Number(raw[i + 1]);
+      ids.push(userId);
+      scoresMap[userId] = score;
+    }
+
     const users = await prisma.user.findMany({
       where: { id: { in: ids } },
       include: {
@@ -104,31 +99,24 @@ module.exports = {
       },
     });
 
-    // ----------------------------
-    // 4) MONTA RESPOSTA (SEM TRADUÇÃO)
-    // ----------------------------
     const items = users.map((u) => ({
       ...u,
-      profile: filterProfileByPlan(u.profile || {}, isPremiumRoute),
-
-      // NÃO TRADUZ — ENVIA ENUM PURO
-      preference: u.preference || {},
-
-      score: scores.find((s) => s.userB === u.id)?.score ?? 0,
+      score: scoresMap[u.id] ?? 0,
     }));
 
     return {
       page,
       limit,
-      total: items.length,
-      pages: Math.ceil(items.length / limit),
+      total: totalRedis,
+      pages: Math.ceil(totalRedis / limit),
       items,
     };
-  },
+  } catch (err) {
+    console.error("❌ ERRO GERAL NO FEED:", err);
+    throw err;
+  }
+},
 
-  // ----------------------------
-  // GET ONE (mesmo da versão antiga)
-  // ----------------------------
   async getOne(id, loggedUser) {
     const u = await prisma.user.findUnique({
       where: { id },

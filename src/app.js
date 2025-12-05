@@ -21,29 +21,21 @@ const blogAuthModule = require("./controllers/modules/blogAuth");
 const blogCategoriesModule = require("./controllers/modules/blogCategories");
 const systemRoutesModule = require("./controllers/modules/systemRoutes");
 
-
 // Módulos privados
 const userPreferencesModule = require("./controllers/modules/userPreferences");
 const feedModule = require("./controllers/modules/feed");
 const likesModule = require("./controllers/modules/likes");
 const userPhotosModule = require("./controllers/modules/usersPhotos");
 const userProfilesModule = require("./controllers/modules/userProfiles");
-// const matchRoutes = require("./routes/users/match.routes");
 const messagesModule = require("./controllers/modules/messages");
 const blogRoutes = require("./controllers/modules/blogPosts");
 const blogFeedModule = require("./controllers/modules/blogFeed");
-
-
-
-
 
 dotenv.config({ quiet: true });
 
 const app = express();
 
- 
-   //🧩 GLOBAL MIDDLEWARES
- 
+// 🧩 GLOBAL MIDDLEWARES
 app.use(
   morgan("dev", {
     skip: (req) => req.originalUrl.startsWith("/admin/queues")
@@ -63,56 +55,51 @@ app.use(
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
- 
-   //🔓 ROTAS PÚBLICAS
+// Middleware para capturar o IP real do cliente
+app.use((req, res, next) => {
+  const realIp =
+    req.headers["cf-connecting-ip"] ||  // Cloudflare
+    req.headers["x-forwarded-for"]?.split(',')[0] ||  // Proxies
+    req.socket.remoteAddress || null;
 
-   /* ================================================
-   🔥 TESTE
-================================================ */
+  req.clientIp = realIp;  // Armazena o IP no objeto da requisição para uso posterior
+  next();  // Chama a próxima função/middleware
+});
+
+// 🔓 ROTAS PÚBLICAS
 app.get("/", (req, res) => res.json({ message: "🔥 API estilo Tinder online!" }));
- 
+
 // login / register / verify / admin login
-// painel das filas
 app.use("/admin/queues", queueDashboard.getRouter());
 app.use("/users", usersModule);
 app.use("/admins", adminRoutes);
-app.use("/admin-users", adminUsersModule); 
+app.use("/admin-users", adminUsersModule);
 app.use("/plans", plansModule);
 app.use("/blog-auth", blogAuthModule);
 app.use("/blog-categories", blogCategoriesModule);
-app.use("/blog-post", blogRoutes )
+app.use("/blog-post", blogRoutes);
+
 // rotas públicas
 app.use("/system-routes", systemRoutesModule);
-
 
 // reset password
 app.use("/password", passwordResetRoutes);
 
 // webhook / pagamentos externos
 app.use("/payments", paymentsModule);
- 
+
 //PROTEÇÃO GLOBAL — APÓS requireAuth
- 
 app.use(requireAuth);
 // 🔥 Expiração automática + migração para FREE
 app.use(checkSubscription);
 
-
-//rotas privadas
+// Rotas privadas
 app.use("/user-photos", userPhotosModule);
 app.use("/user-profiles", userProfilesModule);
 app.use("/user-preferences", userPreferencesModule);
 app.use("/feed", feedModule);
 app.use("/likes", likesModule); // 👈 adiciona o módulo aqui
-// app.use("/matches", matchRoutes);
 app.use("/messages", messagesModule);
 app.use("/blog-feed", blogFeedModule);
-
-
-
-
-
-
-
 
 module.exports = app;

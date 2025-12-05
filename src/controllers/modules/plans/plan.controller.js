@@ -46,17 +46,16 @@ module.exports = {
     }
   },
 
-  async getPublicPlans(req, res) {
+async getPublicPlans(req, res) {
   try {
-    const realIp =
-      req.headers["cf-connecting-ip"] ||  // Cloudflare
-      req.headers["x-forwarded-for"] ||   // proxies
-      req.socket.remoteAddress || null;
+    const realIp = req.clientIp; // 👈 corrigido
 
     const plans = await service.listPublic(realIp);
-    res.json(plans);
+    return res.json(plans);
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error("Erro ao obter planos públicos:", err);
+    return res.status(400).json({ error: err.message });
   }
 },
 

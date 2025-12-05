@@ -17,9 +17,38 @@ async function precalculateCompatibility(userId) {
     return;
   }
 
+  // 🔥 BUSCAR TODOS OS USUÁRIOS QUE DEVEM SER EXCLUÍDOS DO FEED
+  const skipped = await prisma.skip.findMany({
+    where: { skipperId: userId },
+    select: { skippedId: true }
+  });
+
+  const disliked = await prisma.dislike.findMany({
+    where: { dislikerId: userId },
+    select: { dislikedId: true }
+  });
+
+  const liked = await prisma.like.findMany({
+    where: { likerId: userId },
+    select: { likedId: true }
+  });
+
+  const excludedIds = [
+    ...skipped.map(s => s.skippedId),
+    ...disliked.map(d => d.dislikedId),
+    ...liked.map(l => l.likedId)
+  ];
+
+  // 🔥 REMOVER DUPLICADOS
+  const uniqueExcluded = [...new Set(excludedIds)];
+
+  // 🔥 BUSCAR APENAS QUEM DEVE APARECER NO FEED
   const users = await prisma.user.findMany({
     where: {
-      id: { not: userId },
+      id: {
+        not: userId,
+        notIn: uniqueExcluded,
+      },
       status: "ACTIVE",
     },
     include: {

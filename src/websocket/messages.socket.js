@@ -8,8 +8,7 @@ module.exports = function (io) {
     // ============================================================
     // 1) MOSTRAR O QUE O FRONT ESTÁ ENVIANDO
     // ============================================================
-    console.log("🟩 HANDSHAKE RECEBIDO:", socket.handshake.auth);
-
+     
     // ============================================================
     // 2) MOSTRAR O QUE O BACKEND TEM EM process.env.API_KEY
     // ============================================================

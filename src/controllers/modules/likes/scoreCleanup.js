@@ -2,18 +2,14 @@ const { prisma } = require("../../../dataBase/prisma");
 
 async function removeCompatibilityBetween(userA, userB) {
   try {
+    // REMOVE APENAS userA → userB
     await prisma.compatibilityScore.deleteMany({
-      where: {
-        OR: [
-          { userA, userB },
-          { userA: userB, userB: userA }
-        ]
-      }
+      where: { userA, userB }
     });
 
-    console.log(`🧹 Score removido entre ${userA} ↔ ${userB}`);
+    console.log(`🧹 Score removido APENAS de ${userA} → ${userB}`);
   } catch (err) {
-    console.error("❌ Erro ao remover scores:", err);
+    console.error("❌ Erro ao remover score:", err);
   }
 }
 

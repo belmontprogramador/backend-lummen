@@ -2,43 +2,35 @@ const repo = require("./plan.repository");
 const axios = require("axios");
 
 // -------------------------------------------------------------
-// Detecta país pelo IP
+// Detecta país pelo IP (agora recebe só o IP, não req)
 // -------------------------------------------------------------
 async function detectCountry(ip) {
   try {
-    if (!ip) {
-   
-      return "US"; // País de fallback
-    }
+    if (!ip) return "US";
 
     const res = await axios.get(`https://ipapi.co/${ip}/json/`);
- 
-    const country = res.data.country || "US";
- 
-    return country;
+    return res.data.country || "US";
+
   } catch (error) {
-    console.error("Erro ao detectar o país com ipapi.co:", error);
-    return "US"; // Retorna 'US' caso ocorra algum erro
+    console.error("Erro ao detectar país:", error);
+    return "US";
   }
 }
 
 // -------------------------------------------------------------
-// Retorna o preço correto conforme país
+// Retorna o preço conforme país
 // -------------------------------------------------------------
 function pickPrice(plan, country) {
   const c = country.toUpperCase();
 
-  if (c === "BR") {
-    return { price: plan.priceBrl, currency: "BRL" };
-  }
+  if (c === "BR") return { price: plan.priceBrl, currency: "BRL" };
 
   const EU = ["PT", "ES", "FR", "DE", "NL", "IT"];
-  if (EU.includes(c)) {
-    return { price: plan.priceEur, currency: "EUR" };
-  }
+  if (EU.includes(c)) return { price: plan.priceEur, currency: "EUR" };
 
   return { price: plan.priceUsd, currency: "USD" };
 }
+
 
 module.exports = {
   // CRUD ADMIN --------------------------------------------------
@@ -68,27 +60,24 @@ module.exports = {
 
   listRoutes: () => repo.getAllRoutes(),
 
-  // -------------------------------------------------------------
-  // 🔥 LISTA PÚBLICA PARA O APP (IP → país → planos do país)
+ // -------------------------------------------------------------
+  // PUBLIC LIST
   // -------------------------------------------------------------
   async listPublic(ip) {
+
     const country = await detectCountry(ip);
 
-    // Escolher filtro correto
     let where = {};
 
     if (country === "BR") {
       where = { priceBrl: { not: null } };
     } else {
       const EU = ["PT", "ES", "FR", "DE", "NL", "IT"];
-      if (EU.includes(country)) {
-        where = { priceEur: { not: null } };
-      } else {
-        where = { priceUsd: { not: null } };
-      }
+      where = EU.includes(country)
+        ? { priceEur: { not: null } }
+        : { priceUsd: { not: null } };
     }
 
-    // BUSCAR APENAS PLANOS QUE TÊM PREÇO PARA ESSE PAÍS
     const plans = await repo.listFiltered(where);
 
     return plans.map(plan => {
@@ -98,11 +87,12 @@ module.exports = {
         id: plan.id,
         name: plan.name,
         title: plan.title,
-        price: selected.price,      // preço correto!
-        currency: selected.currency, // moeda correta!
+        price: selected.price,
+        currency: selected.currency,
         features: plan.features,
         durationDays: plan.durationDays
       };
     });
-  }
+  },
+
 };
