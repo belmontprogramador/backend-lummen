@@ -1,6 +1,14 @@
 const http = require("http");
 const app = require("./app");
 const cron = require("node-cron");
+require("./utils/redis");
+require("./queueWorkers");
+require("./queueWorkers/compatibility.worker");
+
+ 
+
+
+
 const checkExpiredPayments = require("./jobs/checkExpiredPayments");
 
 const { Server } = require("socket.io");

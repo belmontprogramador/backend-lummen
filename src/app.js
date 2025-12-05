@@ -4,6 +4,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 const path = require("path");
+const queueDashboard = require("./queues/dashboard");
 
 // Middlewares
 const { requireAuth } = require("./middleware/authUser");
@@ -41,7 +42,12 @@ const app = express();
  
    //🧩 GLOBAL MIDDLEWARES
  
-app.use(morgan("dev"));
+app.use(
+  morgan("dev", {
+    skip: (req) => req.originalUrl.startsWith("/admin/queues")
+  })
+);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -57,8 +63,15 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
  
    //🔓 ROTAS PÚBLICAS
+
+   /* ================================================
+   🔥 TESTE
+================================================ */
+app.get("/", (req, res) => res.json({ message: "🔥 API estilo Tinder online!" }));
  
 // login / register / verify / admin login
+// painel das filas
+app.use("/admin/queues", queueDashboard.getRouter());
 app.use("/users", usersModule);
 app.use("/admins", adminRoutes);
 app.use("/admin-users", adminUsersModule); 
@@ -95,9 +108,6 @@ app.use("/blog-feed", blogFeedModule);
 
 
 
-/* ================================================
-   🔥 TESTE
-================================================ */
-app.get("/", (req, res) => res.json({ message: "🔥 API estilo Tinder online!" }));
+
 
 module.exports = app;

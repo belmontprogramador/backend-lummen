@@ -1,14 +1,10 @@
+const compatibilityQueue = require("../queues/compatibility.queue");
 const { prisma } = require("../dataBase/prisma");
-const { runTask } = require("../workers/scoreWorkerPool");
-
-function cleanObject(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
 
 async function precalculateCompatibility(userId) {
-  console.log("🚀 Iniciando pré-cálculo de compatibilidade para:", userId);
+  console.log("🚀 Iniciando enfileiramento de compatibilidade para:", userId);
 
-  const baseUserRaw = await prisma.user.findUnique({
+  const baseUser = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       profile: true,
@@ -16,14 +12,12 @@ async function precalculateCompatibility(userId) {
     },
   });
 
-  if (!baseUserRaw) {
+  if (!baseUser) {
     console.log("⚠️ Usuário não encontrado");
     return;
   }
 
-  const baseUser = cleanObject(baseUserRaw);
-
-  const usersRaw = await prisma.user.findMany({
+  const users = await prisma.user.findMany({
     where: {
       id: { not: userId },
       status: "ACTIVE",
@@ -34,47 +28,16 @@ async function precalculateCompatibility(userId) {
     },
   });
 
-  console.log(`📌 Total de usuários para comparar: ${usersRaw.length}`);
+  console.log(`📌 Total de usuários enfileirados: ${users.length}`);
 
-  for (const u of usersRaw) {
-    try {
-      const cleanTargetUser = cleanObject(u);
-
-      const score = await runTask({
-        loggedUser: baseUser,
-        targetUser: cleanTargetUser,
-      });
-
-      // ⚠️ NOVO: ignora scores fracos
-      if (score < 30) {
-        // console.log(`⏭ Score ignorado (<50): ${baseUser.id} → ${u.id} = ${score}`);
-        continue;
-      }
-
-      // Salva somente scores fortes
-      await prisma.compatibilityScore.upsert({
-        where: {
-          userA_userB: {
-            userA: baseUser.id,
-            userB: u.id,
-          },
-        },
-        update: { score },
-        create: {
-          userA: baseUser.id,
-          userB: u.id,
-          score,
-        },
-      });
-
-      console.log(`💾 Score salvo: ${baseUser.id} → ${u.id} = ${score}`);
-
-    } catch (err) {
-      console.log("❌ Erro calculando score", u.id, err);
-    }
+  for (const target of users) {
+    await compatibilityQueue.add("calc", {
+      baseUser,
+      targetUser: target
+    });
   }
 
-  console.log("🎉 Finalizado cálculo para usuário:", userId);
+  console.log("🎉 Enfileiramento finalizado!");
 }
 
-module.exports = { precalculateCompatibility }
+module.exports = { precalculateCompatibility };

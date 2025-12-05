@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const fs = require("fs");
 const { normalizeUserPayload } = require("../../../utils/normalizeUserPayload");
+const { precalculateCompatibility } = require("../../../jobs/precalculateCompatibility");
+
 
 
 const repository = require("./user.repository");
@@ -144,6 +146,14 @@ await repository.createUserProfile(user.id, {
       process.env.JWT_SECRET || "secret_key",
       { expiresIn: "7d" }
     );
+
+    // 🔥 Disparar cálculo de compatibilidade SEM bloquear o fluxo
+ 
+
+precalculateCompatibility(fullUser.id)
+  .then(() => console.log(`🚀 Compatibilidade enfileirada para o user ${fullUser.id}`))
+  .catch(err => console.error("Erro ao enfileirar compatibilidade:", err));
+
 
     return { user: normalizeUserPayload(fullUser), token };
 
