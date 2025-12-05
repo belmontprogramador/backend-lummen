@@ -1,23 +1,18 @@
 // src/modules/feed/feed.service.js
 
-const repository = require("./feed.repository");
 const { prisma } = require("../../../dataBase/prisma");
-const calculateCompatibility = require("../../../utils/calculateCompatibility");
-const {
-  translateProfileEnums,
-  translatePreferenceEnums,
-} = require("../../../utils/enumTranslator");
 
+// PRE-CÁLCULO AUTOMÁTICO
+const { precalculateCompatibility } = require("../../../jobs/precalculateCompatibility");
+const precalcState = require("../../../jobs/state/precalcState");
 
-// ------------------------------------------------------
-// 🔥 Filtra o perfil dependendo se a rota é FREE ou PREMIUM
-// ------------------------------------------------------
+// ----------------------------
+// FREE vs PREMIUM
+// ----------------------------
 function filterProfileByPlan(profile, isPremiumRoute) {
-  if (isPremiumRoute) {
-    return profile; // PREMIUM vê tudo
-  }
+  if (isPremiumRoute) return profile;
 
-  const allowedKeys = [
+  const allowed = [
     "bio",
     "birthday",
     "gender",
@@ -31,119 +26,96 @@ function filterProfileByPlan(profile, isPremiumRoute) {
     "relationshipType",
   ];
 
-  const filtered = {};
-  for (const key of allowedKeys) {
-    if (profile && profile[key] !== undefined) {
-      filtered[key] = profile[key];
-    }
-  }
-
-  return filtered;
+  const out = {};
+  for (const k of allowed) if (profile && profile[k] !== undefined) out[k] = profile[k];
+  return out;
 }
 
-
-// ------------------------------------------------------
-// 🔥 FUNÇÃO PARA BUSCAR PERFIL + PREFERENCES DO USUÁRIO LOGADO
-// ------------------------------------------------------
-async function loadLoggedUserFull(loggedUserId, locale = "en") {
-  const dbUser = await prisma.user.findUnique({
-    where: { id: loggedUserId },
-    include: {
-      profile: true,
-      preference: true,
-    },
-  });
-
-  if (!dbUser) {
-    throw new Error("Usuário logado não encontrado no banco.");
-  }
-
-  const translatedProfile = await translateProfileEnums(dbUser.profile || {}, locale);
-  const translatedPreference = await translatePreferenceEnums(dbUser.preference || {}, locale);
-
-  return {
-    ...dbUser,
-    profile: translatedProfile || {},
-    preference: translatedPreference || {},
-  };
-}
-
-
-// ------------------------------------------------------
-// ✅ LISTA DO FEED (COM SCORE)
-// ------------------------------------------------------
 module.exports = {
-  async list(query, loggedUser, locale = "en") {
-    const page = Math.max(parseInt(query.page || "1", 10), 1);
-    const limit = Math.max(parseInt(query.limit || "20", 10), 1);
+  // ======================================================
+  // ⚡ LISTA ULTRA RÁPIDA DO FEED (sem traduções)
+  // ======================================================
+  async list(query, loggedUser) {
+    const page = Math.max(parseInt(query.page || "1"), 1);
+    const limit = Math.max(parseInt(query.limit || "20"), 1);
     const skip = (page - 1) * limit;
 
-    const filter = {};
+    const isPremiumRoute =
+      loggedUser.routeTag === "feed_list_premium" ||
+      loggedUser.routeTag === "feed_list_super_premium";
 
-    // 🔍 Buscar usuários do feed respeitando like/dislike/skip
-    const raw = await repository.list({
-      skip,
-      limit,
-      where: filter,
-      loggedUserId: loggedUser.id,
+    // ----------------------------
+    // 1) PRÉ-CÁLCULO AUTOMÁTICO
+    // ----------------------------
+    const hasScores = await prisma.compatibilityScore.findFirst({
+      where: { userA: loggedUser.id },
     });
 
-    // 🔥 Carrega PERFIL + PREFERENCES completos do usuário logado
-    const fullLoggedUser = await loadLoggedUserFull(loggedUser.id, locale);
+    if (!hasScores && !precalcState.isRunning(loggedUser.id)) {
+      console.log("⚡ INICIANDO PRÉ-CÁLCULO AUTOMÁTICO →", loggedUser.id);
 
-    const routeTag = loggedUser.routeTag || "";
-    const isPremiumRoute =
-      routeTag === "feed_list_premium" ||
-      routeTag === "feed_list_super_premium";
+      precalcState.start(loggedUser.id);
 
-    // 🔥 Traduz, filtra e calcula score
-    let items = await Promise.all(
-      raw.map(async (u) => {
-        const translatedProfile = await translateProfileEnums(u.profile || {}, locale);
-        const translatedPreference = await translatePreferenceEnums(u.preference || {}, locale);
+      precalculateCompatibility(loggedUser.id)
+        .then(() => {
+          console.log("✅ PRÉ-CÁLCULO FINALIZADO PARA:", loggedUser.id);
+          precalcState.stop(loggedUser.id);
+        })
+        .catch((err) => {
+          console.log("❌ ERRO NO PRÉ-CÁLCULO:", err);
+          precalcState.stop(loggedUser.id);
+        });
+    }
 
-        const filteredProfile = filterProfileByPlan(
-          translatedProfile,
-          isPremiumRoute
-        );
+    // ----------------------------
+    // 2) BUSCA APENAS OS IDs ORDENADOS
+    // ----------------------------
+    const scores = await prisma.compatibilityScore.findMany({
+      where: {
+        userA: loggedUser.id,
+        score: { gte: 30 },
+      },
+      orderBy: { score: "desc" },
+      take: limit,
+      skip,
+    });
 
-        console.log("===> Calculando score para:", u.id);
+    if (scores.length === 0) {
+      return {
+        page,
+        limit,
+        total: 0,
+        pages: 0,
+        items: [],
+      };
+    }
 
-        let score = 0;
+    const ids = scores.map((s) => s.userB);
 
-        try {
-          score = calculateCompatibility(
-            fullLoggedUser,
-            {
-              ...u,
-              profile: translatedProfile,
-              preference: translatedPreference,
-            }
-          );
-             console.log(`📊 SCORE FINAL (${u.id}) =`, score);
+    // ----------------------------
+    // 3) CARREGA OS USUÁRIOS
+    // ----------------------------
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids } },
+      include: {
+        profile: true,
+        preference: true,
+        photos: true,
+      },
+    });
 
-        } catch (err) {
-          console.log("🔥 ERRO AO CALCULAR SCORE DO USUÁRIO:", u.id);
-          console.log("PROFILE =", JSON.stringify(u.profile, null, 2));
-          console.log("PREFERENCE =", JSON.stringify(u.preference, null, 2));
-          console.log("ERRO DETALHADO =", err.message);
-          score = 0;
-        }
+    // ----------------------------
+    // 4) MONTA RESPOSTA (SEM TRADUÇÃO)
+    // ----------------------------
+    const items = users.map((u) => ({
+      ...u,
+      profile: filterProfileByPlan(u.profile || {}, isPremiumRoute),
 
-        return {
-          ...u,
-          profile: filteredProfile,
-          preference: translatedPreference,
-          score,
-        };
-      })
-    );
+      // NÃO TRADUZ — ENVIA ENUM PURO
+      preference: u.preference || {},
 
-    // ❌ Remove compatibilidade baixa
-    items = items.filter((i) => i.score >= 50);
-
-    // 🔝 Ordena do maior score
-    items.sort((a, b) => b.score - a.score);
+      score: scores.find((s) => s.userB === u.id)?.score ?? 0,
+    }));
 
     return {
       page,
@@ -154,31 +126,29 @@ module.exports = {
     };
   },
 
+  // ----------------------------
+  // GET ONE (mesmo da versão antiga)
+  // ----------------------------
+  async getOne(id, loggedUser) {
+    const u = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+        preference: true,
+        photos: true,
+      },
+    });
 
-  // ------------------------------------------------------
-  // ❗ GET ONE → NÃO TEM SCORE
-  // ------------------------------------------------------
-  async getOne(id, loggedUser, locale = "en") {
-    const u = await repository.getById(id);
     if (!u) throw new Error("Usuário não encontrado");
 
-    const translatedProfile = await translateProfileEnums(u.profile || {}, locale);
-    const translatedPreference = await translatePreferenceEnums(u.preference || {}, locale);
-
-    const routeTag = loggedUser.routeTag || "";
     const isPremiumRoute =
-      routeTag === "feed_view_premium" ||
-      routeTag === "feed_view_super_premium";
-
-    const filteredProfile = filterProfileByPlan(
-      translatedProfile,
-      isPremiumRoute
-    );
+      loggedUser.routeTag === "feed_view_premium" ||
+      loggedUser.routeTag === "feed_view_super_premium";
 
     return {
       ...u,
-      profile: filteredProfile,
-      preference: translatedPreference,
+      profile: filterProfileByPlan(u.profile || {}, isPremiumRoute),
+      preference: u.preference || {},
     };
   },
 };

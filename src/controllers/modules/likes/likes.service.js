@@ -1,42 +1,47 @@
 const repo = require("./likes.repository");
 const { prisma } = require("../../../dataBase/prisma");
+const { removeCompatibilityBetween } = require("./scoreCleanup");
 
 module.exports = {
   //
   // ❤️ LIKE
   //
-  async createLike(likerId, likedId, isSuper = false) {
-    if (likerId === likedId)
-      throw new Error("Você não pode curtir a si mesmo.");
+async createLike(likerId, likedId, isSuper = false) {
+  if (likerId === likedId)
+    throw new Error("Você não pode curtir a si mesmo.");
 
-    const dislike = await prisma.dislike.findUnique({
-      where: { dislikerId_dislikedId: { dislikerId: likerId, dislikedId: likedId } }
-    });
-    if (dislike) throw new Error("Você já deu dislike neste usuário.");
+  // ❌ Verifica se existe dislike
+  const dislike = await prisma.dislike.findUnique({
+    where: { dislikerId_dislikedId: { dislikerId: likerId, dislikedId: likedId } }
+  });
+  if (dislike) throw new Error("Você já deu dislike neste usuário.");
 
-    const skip = await prisma.skip.findUnique({
-      where: { skipperId_skippedId: { skipperId: likerId, skippedId: likedId } }
-    });
-    if (skip) throw new Error("Você já deu skip neste usuário.");
+  // ❌ Verifica se existe skip
+  const skip = await prisma.skip.findUnique({
+    where: { skipperId_skippedId: { skipperId: likerId, skippedId: likedId } }
+  });
+  if (skip) throw new Error("Você já deu skip neste usuário.");
 
-    const like = await repo.upsertLike(likerId, likedId, isSuper);
+  // ❤️ Cria o like
+  const like = await repo.upsertLike(likerId, likedId, isSuper);
 
-    const reverseLike = await prisma.like.findUnique({
-      where: {
-        likerId_likedId: {
-          likerId: likedId,
-          likedId: likerId
-        }
+  // ⭐ CORRETO: buscar o reverse like ANTES de verificar match
+  const reverseLike = await prisma.like.findUnique({
+    where: {
+      likerId_likedId: {
+        likerId: likedId,
+        likedId: likerId
       }
-    });
+    }
+  });
 
-    const matched = !!reverseLike;
+  const matched = !!reverseLike;
 
-    return {
-      like,
-      matched,
-    };
-  },
+  return {
+    like,
+    matched,
+  };
+},
 
   async removeLike(likerId, likedId) {
     return repo.deleteLike(likerId, likedId);
@@ -59,20 +64,20 @@ module.exports = {
   // 💔 DISLIKE
   //
   async createDislike(dislikerId, dislikedId) {
-    if (dislikerId === dislikedId)
-      throw new Error("Você não pode dar dislike em si mesmo.");
+  if (dislikerId === dislikedId)
+    throw new Error("Você não pode dar dislike em si mesmo.");
 
-    const like = await prisma.like.findUnique({
-      where: { likerId_likedId: { likerId: dislikerId, likedId: dislikedId } }
-    });
-    if (like) throw new Error("Você já curtiu este usuário.");
+  const dislike = await prisma.dislike.upsert({
+    where: { dislikerId_dislikedId: { dislikerId, dislikedId } },
+    create: { dislikerId, dislikedId },
+    update: {},
+  });
 
-    return prisma.dislike.upsert({
-      where: { dislikerId_dislikedId: { dislikerId, dislikedId } },
-      create: { dislikerId, dislikedId },
-      update: {},
-    });
-  },
+  // 🧹 remove compatibilidade
+  removeCompatibilityBetween(dislikerId, dislikedId);
+
+  return dislike;
+},
 
   async sentLikes(userId) {
   return repo.getSentLikes(userId);
@@ -98,23 +103,18 @@ async listMatches(userId) {
   // ⏭ SKIP
   //
   async createSkip(skipperId, skippedId) {
-    if (skipperId === skippedId)
-      throw new Error("Você não pode dar skip em si mesmo.");
+  if (skipperId === skippedId)
+    throw new Error("Você não pode dar skip em si mesmo.");
 
-    const like = await prisma.like.findUnique({
-      where: { likerId_likedId: { likerId: skipperId, likedId: skippedId } }
-    });
-    if (like) throw new Error("Você já curtiu este usuário.");
+  const skip = await prisma.skip.upsert({
+    where: { skipperId_skippedId: { skipperId, skippedId } },
+    create: { skipperId, skippedId },
+    update: {},
+  });
 
-    const dislike = await prisma.dislike.findUnique({
-      where: { dislikerId_dislikedId: { dislikerId: skipperId, dislikedId: skippedId } }
-    });
-    if (dislike) throw new Error("Você já deu dislike neste usuário.");
+  removeCompatibilityBetween(skipperId, skippedId);
 
-    return prisma.skip.upsert({
-      where: { skipperId_skippedId: { skipperId, skippedId } },
-      create: { skipperId, skippedId },
-      update: {},
-    });
-  },
+  return skip;
+}
+
 };

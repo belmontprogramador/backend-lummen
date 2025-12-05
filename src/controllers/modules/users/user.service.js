@@ -9,6 +9,32 @@ const repository = require("./user.repository");
 
 const PUBLIC_BASE = "/uploads/users";
 
+const axios = require("axios");
+
+async function geocodeAddress(city, state, country) {
+  const apiKey = process.env.GEOAPIFY_KEY; // configure no .env
+
+  const address = `${city}, ${state}, ${country}`;
+
+  const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
+    address
+  )}&format=json&apiKey=${apiKey}`;
+
+  const res = await axios.get(url);
+
+  if (!res.data.results || res.data.results.length === 0) {
+    throw new Error("Endereço não encontrado via geocoding");
+  }
+
+  const r = res.data.results[0];
+
+  return {
+    latitude: r.lat,
+    longitude: r.lon,
+  };
+}
+
+
 const toPublicPath = (file) => (file ? `${PUBLIC_BASE}/${file.filename}` : null);
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
@@ -28,8 +54,14 @@ module.exports = {
   async register(payload, file) {
     let { email, password, isPaid, status, name, planId } = payload;
 
-    if (!email || !password) throw new Error("email e password são obrigatórios");
-    if (!file) throw new Error("photo é obrigatória");
+ if (!email || !password) throw new Error("email e password são obrigatórios");
+if (!file) throw new Error("photo é obrigatória");
+
+// 🔥 Validar localização obrigatória
+if (!payload.city || !payload.state || !payload.country) {
+  throw new Error("city, state e country são obrigatórios");
+}
+
 
     email = normalizeEmail(email);
 
@@ -56,8 +88,38 @@ module.exports = {
       planId,
     });
 
-    // Criar o perfil UNIFICADO
-    await repository.createUserProfile(user.id);
+    
+// Extrair campos do payload
+const { city, state, country } = payload;
+
+// Gerar latitude/longitude automaticamente
+let lat = null;
+let lon = null;
+
+if (city && state && country) {
+  try {
+    const point = await geocodeAddress(city, state, country);
+    lat = point.latitude;
+    lon = point.longitude;
+  } catch (err) {
+    console.error("Erro ao gerar geocoding:", err.message);
+    lat = null;
+    lon = null;
+  }
+}
+
+
+// Criar perfil com TODOS os campos
+await repository.createUserProfile(user.id, {
+  birthday: payload.birthday,
+  city,
+  state,
+  country,
+  latitude: lat,
+  longitude: lon,
+});
+
+
 
     // Criar preferências padrão
     await repository.createUserPreference(user.id);

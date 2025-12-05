@@ -297,6 +297,10 @@ model User {
   messagesReceived Message[] @relation("MessagesReceived")
     conversations1 Conversation[] @relation("User1Chats")
   conversations2 Conversation[] @relation("User2Chats")
+
+    scoresA CompatibilityScore[] @relation("UserAScores")
+  scoresB CompatibilityScore[] @relation("UserBScores")
+
 }
 
 model Plan {
@@ -663,6 +667,25 @@ model BlogAuthor {
 
   @@map("blog_authors")
 }
+
+model CompatibilityScore {
+  id        String   @id @default(uuid())
+
+  userA     String   @db.Uuid
+  userB     String   @db.Uuid
+
+  score     Int
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  userAUser User @relation("UserAScores", fields: [userA], references: [id], onDelete: Cascade)
+  userBUser User @relation("UserBScores", fields: [userB], references: [id], onDelete: Cascade)
+
+  @@unique([userA, userB])
+  @@index([userA, score])
+  @@index([userB])
+}
+
 
 
 

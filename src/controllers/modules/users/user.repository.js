@@ -1,5 +1,6 @@
 const { prisma } = require("../../../dataBase/prisma");
 
+
 module.exports = {
 
   // -------------------------------------------------------------------
@@ -115,11 +116,20 @@ findByEmail(email) {
   },
 
   // 🔥 Novo: criação de perfil unificado
-  createUserProfile(userId) {
-    return prisma.userProfile.create({
-      data: { userId }
-    });
-  },
+createUserProfile(userId, extra = {}) {
+  return prisma.userProfile.create({
+    data: {
+      userId,
+      birthday: extra.birthday,
+      city: extra.city || null,
+      state: extra.state || null,
+      country: extra.country || null,
+      latitude: extra.latitude || null,
+      longitude: extra.longitude || null,
+    }
+  });
+},
+
 
   createUserPreference(userId) {
     return prisma.userPreference.create({
@@ -145,9 +155,9 @@ findByEmail(email) {
         preferredInterestsMusic: [],
         preferredInterestsNightlife: [],
         preferredInterestsTvCinema: [],
-        maxDistanceKm: 50,
+        maxDistanceKm: 100,
         ageMin: 18,
-        ageMax: 99,
+        ageMax: 50,
       }
     });
   },
