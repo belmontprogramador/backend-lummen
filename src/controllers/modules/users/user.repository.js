@@ -16,7 +16,9 @@ findByEmail(email) {
           id: true,
           name: true,
           title: true,
-          price: true,
+         priceUsd: true,
+priceBrl: true,
+priceEur: true,
           durationDays: true,
           allowedRoutes: true,
           routePayment: true
@@ -42,7 +44,10 @@ findByEmail(email) {
             id: true,
             name: true,
             title: true,
-            price: true,
+            priceUsd: true,
+priceBrl: true,
+priceEur: true,
+
             durationDays: true,
             allowedRoutes: true,
             routePayment: true
@@ -85,7 +90,10 @@ findByEmail(email) {
             id: true,
             name: true,
             title: true,
-            price: true,
+           priceUsd: true,
+priceBrl: true,
+priceEur: true,
+
             durationDays: true,
             allowedRoutes: true,
             routePayment: true
@@ -105,7 +113,10 @@ findByEmail(email) {
             id: true,
             name: true,
             title: true,
-            price: true,
+            priceUsd: true,
+priceBrl: true,
+priceEur: true,
+
             durationDays: true,
             allowedRoutes: true,
             routePayment: true
@@ -220,7 +231,10 @@ createUserProfile(userId, extra = {}) {
             id: true,
             name: true,
             title: true,
-            price: true,
+            priceUsd: true,
+priceBrl: true,
+priceEur: true,
+
             durationDays: true,
             allowedRoutes: true,
             routePayment: true

@@ -19,6 +19,8 @@ const plansModule = require("./controllers/modules/plans");
 const adminUsersModule = require("./controllers/modules/adminUsers");
 const blogAuthModule = require("./controllers/modules/blogAuth");
 const blogCategoriesModule = require("./controllers/modules/blogCategories");
+const systemRoutesModule = require("./controllers/modules/systemRoutes");
+
 
 // Módulos privados
 const userPreferencesModule = require("./controllers/modules/userPreferences");
@@ -79,6 +81,9 @@ app.use("/plans", plansModule);
 app.use("/blog-auth", blogAuthModule);
 app.use("/blog-categories", blogCategoriesModule);
 app.use("/blog-post", blogRoutes )
+// rotas públicas
+app.use("/system-routes", systemRoutesModule);
+
 
 // reset password
 app.use("/password", passwordResetRoutes);

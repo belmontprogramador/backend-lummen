@@ -308,10 +308,15 @@ model Plan {
   name      String   @unique
   title     String
   features  Json
-  price     Decimal  @db.Decimal(10,2)
+
+  // 💸 PREÇOS DIFERENTES POR MOEDA
+  priceUsd  Decimal? @db.Decimal(10,2)
+  priceBrl  Decimal? @db.Decimal(10,2)
+  priceEur  Decimal? @db.Decimal(10,2)
+
   durationDays Int
   allowedRoutes Json @default("[]")
-   routePayment Json  @default("{}")          // mapa { tag: boolean }
+  routePayment Json  @default("{}")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

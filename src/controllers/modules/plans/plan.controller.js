@@ -46,6 +46,20 @@ module.exports = {
     }
   },
 
+  async getPublicPlans(req, res) {
+  try {
+    const realIp =
+      req.headers["cf-connecting-ip"] ||  // Cloudflare
+      req.headers["x-forwarded-for"] ||   // proxies
+      req.socket.remoteAddress || null;
+
+    const plans = await service.listPublic(realIp);
+    res.json(plans);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+},
+
   async listRoutes(req, res) {
     try {
       const routes = await service.listRoutes();
